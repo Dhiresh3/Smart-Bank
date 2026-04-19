@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GestureTic Game</title>
+  <style>
+    td {
+      width: 60px;
+      height: 60px;
+      text-align: center;
+      font-size: 24px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    td.clicked {
+      transform: scale(1.2);
+      box-shadow: 0 0 15px #0f0;
+    }
+    #board {
+      margin: 20px auto;
+    }
+    button {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Welcome, {{ player }}</h2>
+  <img src="{{ photo }}" alt="Player Photo" width="100" height="100"
+       onerror="this.src='https://via.placeholder.com/100'"><br>
+  <p>Make your move using hand gestures or clicks!</p>
+
+  <table id="board" border="1">
+    <tr>
+      <td id="cell1" onclick="makeMove(this, 1)"></td>
+      <td id="cell2" onclick="makeMove(this, 2)"></td>
+      <td id="cell3" onclick="makeMove(this, 3)"></td>
+    </tr>
+    <tr>
+      <td id="cell4" onclick="makeMove(this, 4)"></td>
+      <td id="cell5" onclick="makeMove(this, 5)"></td>
+      <td id="cell6" onclick="makeMove(this, 6)"></td>
+    </tr>
+    <tr>
+      <td id="cell7" onclick="makeMove(this, 7)"></td>
+      <td id="cell8" onclick="makeMove(this, 8)"></td>
+      <td id="cell9" onclick="makeMove(this, 9)"></td>
+    </tr>
+  </table>
+
+  <button onclick="resetBoard()">Reset</button>
+
+  <script>
+    let turn = 'X';
+    let boardState = Array(9).fill('');
+
+    function makeMove(cell, index) {
+      if (boardState[index - 1] !== '') return;
+      boardState[index - 1] = turn;
+      cell.innerText = turn;
+      cell.classList.add('clicked');
+      if (checkWin()) {
+        alert(`🎉 ${turn} wins!`);
+        updateScore();
+      }
+      turn = (turn === 'X') ? 'O' : 'X';
+    }
+
+    function checkWin() {
+      const winPatterns = [
+        [0,1,2], [3,4,5], [6,7,8],
+        [0,3,6], [1,4,7], [2,5,8],
+        [0,4,8], [2,4,6]
+      ];
+      return winPatterns.some(pattern =>
+        pattern.every(i => boardState[i] === turn)
+      );
+    }
+
+    function updateScore() {
+      fetch('/update_score', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({player: "{{ player }}"})
+      });
+    }
+
+    function resetBoard() {
+      boardState = Array(9).fill('');
+      for (let i = 1; i <= 9; i++) {
+        const cell = document.getElementById('cell' + i);
+        cell.innerText = '';
+        cell.classList.remove('clicked');
+      }
+      turn = 'X';
+    }
+
+    // Poll for gesture-triggered moves
+    setInterval(() => {
+      fetch('/latest_move')
+        .then(res => res.json())
+        .then(data => {
+          const cellId = 'cell' + data.cell;
+          const cell = document.getElementById(cellId);
+          if (cell && cell.innerText === '') {
+            makeMove(cell, data.cell);
+          }
+        });
+    }, 1000);
+  </script>
+</body>
+</html>

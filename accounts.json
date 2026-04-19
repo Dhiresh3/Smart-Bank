@@ -1,0 +1,204 @@
+{
+    "1111": {
+        "name": "dhiresh",
+        "pass": "1111",
+        "balance": 85000.0
+    },
+    "200": {
+        "name": "Skiller",
+        "pass": "1729",
+        "balance": 0.0,
+        "history": [
+            "Deposited \u20b910000.0",
+            "Checked balance",
+            "Withdrew \u20b95000.0",
+            "Withdrew \u20b95000.0"
+        ]
+    },
+    "123456789": {
+        "name": "Mayuresh khade",
+        "pass": "842006",
+        "balance": 400.0,
+        "history": [
+            {
+                "date": "2025-12-13 21:17:01",
+                "type": "Info",
+                "description": "Account Created",
+                "amount": null,
+                "balance": 0.0
+            },
+            {
+                "date": "2025-12-13 21:17:55",
+                "type": "Credit",
+                "description": "Deposit",
+                "amount": 200.0,
+                "balance": 200.0
+            },
+            {
+                "date": "2025-12-13 21:18:05",
+                "type": "Credit",
+                "description": "Deposit",
+                "amount": 200.0,
+                "balance": 400.0
+            },
+            {
+                "date": "2025-12-13 21:18:50",
+                "type": "Info",
+                "description": "Balance Check",
+                "amount": null,
+                "balance": 400.0
+            }
+        ]
+    },
+    "12345678": {
+        "name": "Nigger35",
+        "pass": "69",
+        "balance": 80.0,
+        "history": [
+            {
+                "date": "2025-12-13 22:01:58",
+                "type": "Info",
+                "description": "Account Created",
+                "amount": null,
+                "balance": 0.0
+            },
+            {
+                "date": "2025-12-13 22:03:05",
+                "type": "Credit",
+                "description": "Deposit",
+                "amount": 10.0,
+                "balance": 10.0
+            },
+            {
+                "date": "2025-12-13 22:03:14",
+                "type": "Credit",
+                "description": "Deposit",
+                "amount": 10.0,
+                "balance": 20.0
+            },
+            {
+                "date": "2025-12-13 22:03:49",
+                "type": "Credit",
+                "description": "Deposit",
+                "amount": 10.0,
+                "balance": 30.0
+            },
+            {
+                "date": "2025-12-13 22:03:49",
+                "type": "Credit",
+                "description": "Deposit",
+                "amount": 10.0,
+                "balance": 40.0
+            },
+            {
+                "date": "2025-12-13 22:03:51",
+                "type": "Credit",
+                "description": "Deposit",
+                "amount": 10.0,
+                "balance": 50.0
+            },
+            {
+                "date": "2025-12-13 22:03:52",
+                "type": "Credit",
+                "description": "Deposit",
+                "amount": 10.0,
+                "balance": 60.0
+            },
+            {
+                "date": "2025-12-13 22:03:53",
+                "type": "Credit",
+                "description": "Deposit",
+                "amount": 10.0,
+                "balance": 70.0
+            },
+            {
+                "date": "2025-12-13 22:03:55",
+                "type": "Credit",
+                "description": "Deposit",
+                "amount": 10.0,
+                "balance": 80.0
+            }
+        ]
+    },
+    "123": {
+        "name": "jjj",
+        "pass": "123",
+        "balance": 0.0,
+        "history": []
+    },
+    "70156074": {
+        "name": "Dhiresh Margaj",
+        "age": 19,
+        "income": 1000,
+        "account_type": "Savings",
+        "pass": "1729",
+        "balance": 0.0,
+        "history": []
+    },
+    "28087278": {
+        "name": "Dhiresh Margaj",
+        "age": 19,
+        "income": 1000,
+        "account_type": "Savings",
+        "pass": "1729",
+        "balance": 0.0,
+        "history": []
+    },
+    "99794425": {
+        "name": "Skiller",
+        "age": 44,
+        "income": 10000,
+        "account_type": "Savings",
+        "pass": "4444",
+        "balance": 454.5,
+        "history": [
+            "Checked balance",
+            "Deposited \u20b9500.0",
+            "Withdrew \u20b945.5",
+            "Checked balance",
+            "Checked balance"
+        ]
+    },
+    "2691449": {
+        "name": "trunesh sonu sarmalkar",
+        "age": 21,
+        "income": 10000000,
+        "account_type": "Savings",
+        "pass": "2682012",
+        "balance": 50000.0,
+        "history": [
+            "Deposited \u20b950000.0",
+            "Checked balance"
+        ]
+    },
+    "3029005": {
+        "name": "Dhiresh Margaj",
+        "age": 20,
+        "income": 100,
+        "account_type": "Savings",
+        "location": "Mumbai",
+        "pass": "1729",
+        "balance": 0.0,
+        "history": []
+    },
+    "87094286": {
+        "name": "Dhiresh Margaj",
+        "age": 20,
+        "income": 100,
+        "account_type": "Savings",
+        "location": "Mumbai",
+        "pass": "1729",
+        "balance": 7000.0,
+        "history": [
+            {
+                "date": "2026-03-03 13:17:59",
+                "type": "Credit",
+                "description": "Deposit",
+                "amount": 7000.0,
+                "balance": 7000.0
+            },
+            "Checked balance",
+            "Checked balance"
+        ]
+    }
+}

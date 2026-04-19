@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tic Tac Toe with Gestures</title>
+</head>
+<body>
+    <style>
+    table {
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+    td {
+        width: 60px;
+        height: 60px;
+        text-align: center;
+        font-size: 2em;
+        border: 2px solid #333;
+    }
+    h2 {
+        color: green;
+    }
+</style>
+    <h1>Tic Tac Toe</h1>
+    <img src="{{ url_for('video_feed') }}" width="640" height="480">
+    <h2>Board:</h2>
+    <table>
+        {% for i in range(3) %}
+        <tr>
+            {% for j in range(3) %}
+            <td>{{ board[i*3 + j] }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+    {% if winner %}
+    <h2>Winner: {{ winner }}</h2>
+    {% endif %}
+</body>
+</html>

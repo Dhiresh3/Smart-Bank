@@ -1,0 +1,2506 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Skiller SmartBank </title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <center>
+    <h1 style="color: red; font-family: Arial, sans-serif; margin: 10px 0;">SKiller SmartBank</h1>
+  </center>
+  <style>
+    .form-group {
+      margin-bottom: 15px;
+      text-align: left;
+      width: 80%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: #333;
+      font-weight: 500;
+    }
+
+    input:required,
+    select:required {
+      border-left: 3px solid #ff6b6b;
+    }
+
+    input:valid,
+    select:valid {
+      border-left: 3px solid #51cf66;
+    }
+
+    .navbar {
+      background: #00bcd4;
+      padding: 15px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: 0 4px 15px rgba(0, 188, 212, 0.4);
+      animation: slideDown 0.8s ease;
+    }
+
+    .navbar button {
+      background: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .navbar button:hover {
+      background: #b2ebf2;
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .navbar button::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(0, 188, 212, 0.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.5s ease, height 0.5s ease;
+      z-index: 0;
+    }
+
+    .navbar button:hover::after {
+      width: 250%;
+      height: 250%;
+    }
+
+    .section {
+      display: none;
+      padding: 30px;
+      animation: fadeIn 0.6s ease-in;
+      transform-style: preserve-3d;
+    }
+
+    .active {
+      display: block;
+      animation: floatIn 0.8s ease forwards;
+    }
+
+    input,
+    button.action,
+    select {
+      margin: 10px auto;
+      display: block;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      width: 80%;
+      transition: all 0.3s ease;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      box-shadow: 0 0 15px #00bcd4;
+      transform: scale(1.03);
+    }
+
+    button.action {
+      background: linear-gradient(135deg, #00bcd4, #0097a7);
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0, 188, 212, 0.3);
+      border: none;
+    }
+
+    button.action:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 6px 15px rgba(0, 188, 212, 0.4);
+    }
+
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 500px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .card h3 {
+      color: #0097a7;
+      margin-top: 0;
+    }
+
+    .scheme-list,
+    .loan-list {
+      text-align: left;
+      margin: 15px 0;
+      padding-left: 20px;
+    }
+
+    .scheme-list li,
+    .loan-list li {
+      margin: 8px 0;
+      color: #555;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 500px;
+      position: relative;
+      animation: modalFadeIn 0.3s;
+    }
+
+    #ageConfirmModal .modal-content {
+      background: linear-gradient(135deg, #00bcd4, #00acc1);
+      color: black;
+      box-shadow: 0 8px 25px rgba(0, 188, 212, 0.4);
+    }
+
+    #ageConfirmModal .modal-content h3 {
+      color: black;
+      font-weight: bold;
+    }
+
+    #ageConfirmModal .modal-content p {
+      color: black;
+      font-weight: 500;
+    }
+
+    .close {
+      position: absolute;
+      right: 20px;
+      top: 15px;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .response {
+      margin-top: 20px;
+      font-weight: bold;
+      color: red;
+      animation: fadeIn 0.6s ease-in;
+      text-align: left;
+      padding: 15px;
+      display: none;
+      background: #f0f9ff;
+      border-radius: 8px;
+      border-left: 4px solid #00bcd4;
+      line-height: 1.6;
+    }
+
+    .response.success {
+      color: green;
+      border-left-color: #51cf66;
+      background: #f0fdf4;
+    }
+
+    .chat-box {
+      background: #fff;
+      width: 90%;
+      max-width: 500px;
+      margin: 0 auto;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      height: 400px;
+      overflow: hidden;
+      animation: floatIn 0.8s ease;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      text-align: left;
+    }
+
+    .chat-message {
+      margin: 10px 0;
+      padding: 10px 15px;
+      border-radius: 15px;
+      display: inline-block;
+      animation: fadeIn 0.4s ease;
+      max-width: 80%;
+    }
+
+    .user {
+      background: #00bcd4;
+      color: white;
+      align-self: flex-end;
+      float: right;
+    }
+
+    .bot {
+      background: #e0f7fa;
+      color: #00796b;
+      float: left;
+    }
+
+    .chat-input {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #ddd;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .chat-input input:focus {
+      border-color: #00bcd4;
+      box-shadow: 0 0 10px #00bcd4;
+    }
+
+    .chat-input button {
+      background: #00bcd4;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 15px;
+      margin-left: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .chat-input button:hover {
+      transform: scale(1.05);
+      background: #0097a7;
+    }
+
+    footer {
+      margin-top: 40px;
+      font-size: 14px;
+      color: white;
+      background-color: #00bcd4;
+      padding: 20px;
+      text-align: center;
+      animation: fadeUp 1s ease;
+    }
+
+    footer a {
+      color: white;
+      text-decoration: underline;
+      transition: all 0.3s ease;
+    }
+
+    footer a:hover {
+      color: #ffeb3b;
+      font-size: 16px;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      text-align: center;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes floatIn {
+      from {
+        opacity: 0;
+        transform: translateY(30px) rotateX(-15deg) scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) rotateX(0deg) scale(1);
+      }
+    }
+
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .history-table {
+      border-collapse: collapse;
+      width: 90%;
+      margin: 20px auto;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .history-table th,
+    .history-table td {
+      padding: 12px 15px;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+    }
+
+    .history-table th {
+      background: #00bcd4;
+      color: white;
+    }
+
+    .history-table tr:hover {
+      background-color: #f1f1f1;
+      transition: 0.3s;
+    }
+
+    .badge-deposit,
+    .badge-withdraw,
+    .badge-neutral {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 14px;
+      display: inline-block;
+    }
+
+    .badge-deposit {
+      background-color: #51cf66;
+      color: white;
+    }
+
+    .badge-withdraw {
+      background-color: #ff6b6b;
+      color: white;
+    }
+
+    .badge-neutral {
+      background-color: #868e96;
+      color: white;
+    }
+
+    .ai-chat-box {
+      background: linear-gradient(135deg, rgba(0, 176, 185, 0.2), rgba(0, 144, 170, 0.35));
+      border: 1px solid rgba(0, 188, 212, 0.4);
+      box-shadow: 0 0 20px rgba(0, 188, 212, 0.35), 0 0 40px rgba(0, 144, 170, 0.25);
+      border-radius: 14px;
+      padding: 12px;
+      width: 90%;
+      max-width: 540px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .ai-chat-messages {
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 10px;
+      padding: 12px;
+      max-height: 260px;
+      overflow-y: auto;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .ai-chat-message {
+      margin: 10px 0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      max-width: 90%;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .ai-chat-message.user {
+      background: #00bcd4;
+      color: white;
+      margin-left: auto;
+      text-align: right;
+    }
+
+    .ai-chat-message.bot {
+      background: #e0f7fa;
+      color: #0b7285;
+      margin-right: auto;
+      text-align: left;
+      box-shadow: 0 0 12px rgba(0, 188, 212, 0.3);
+    }
+
+    .ai-chat-input {
+      display: flex;
+      gap: 8px;
+    }
+
+    .ai-chat-input input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #b2ebf2;
+      outline: none;
+      transition: box-shadow 0.2s ease;
+    }
+
+    .ai-chat-input input:focus {
+      box-shadow: 0 0 10px rgba(0, 188, 212, 0.4);
+      border-color: #00bcd4;
+    }
+
+    .ai-chat-input button {
+      background: linear-gradient(135deg, #00bcd4, #0097a7);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 188, 212, 0.3);
+    }
+
+    .ai-chat-input button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(0, 188, 212, 0.35);
+    }
+
+    .logo-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 20px auto;
+      padding: 30px;
+      background: linear-gradient(135deg, rgba(0, 50, 70, 0.95) 0%, rgba(0, 80, 100, 0.9) 50%, rgba(0, 100, 120, 0.85) 100%);
+      border-radius: 12px;
+      box-shadow: 0 0 50px rgba(0, 200, 220, 0.7), 0 0 100px rgba(0, 180, 200, 0.5), inset 0 0 40px rgba(0, 120, 150, 0.4);
+      animation: glowPulse 3s ease-in-out infinite;
+      max-width: 400px;
+      border: 1px solid rgba(0, 200, 220, 0.3);
+    }
+
+    .logo-container img {
+      width: 250px;
+      height: auto;
+      max-width: 100%;
+      display: block;
+      position: relative;
+      z-index: 1;
+    }
+
+    @keyframes glowPulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 50px rgba(0, 200, 220, 0.7), 0 0 100px rgba(0, 180, 200, 0.5), inset 0 0 40px rgba(0, 120, 150, 0.4);
+      }
+
+      50% {
+        box-shadow: 0 0 70px rgba(0, 220, 240, 0.9), 0 0 120px rgba(0, 200, 220, 0.7), inset 0 0 50px rgba(0, 150, 180, 0.6);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="navbar">
+    <button onclick="showSection('home')">Home</button>
+    <button onclick="showSection('loans')">Loans & Schemes</button>
+    <button onclick="showSection('open')">Open Account</button>
+    <button onclick="showSection('deposit')">Deposit</button>
+    <button onclick="showSection('withdraw')">Withdraw</button>
+    <button onclick="showSection('check')">Check Balance</button>
+    <button onclick="showSection('passbook')">Passbook</button>
+    <button onclick="showSection('history')">History</button>
+    <button onclick="showSection('close')">Close Account</button>
+    <button onclick="showSection('support')">💬 Customer Support</button>
+  </div>
+  <div class="section active" id="home">
+    <h2> 🏛️ Welcome to Skiller SmartBank </h2>
+    <div class="logo-container" id="logoContainer">
+      <img src="/Futuristic%203D%20logo%20d.png" alt="SmartBank Logo" id="logoImage" onload="
+          fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'index.html:363',
+              message: 'Image loaded successfully',
+              data: { src: this.src, width: this.width, height: this.height, naturalWidth: this.naturalWidth, naturalHeight: this.naturalHeight },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'A'
+            })
+          }).catch(() => {});
+          console.log('Image loaded successfully');
+        " onerror="
+          fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'index.html:363',
+              message: 'Image failed to load',
+              data: { src: this.src, error: 'Image load error' },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'A'
+            })
+          }).catch(() => {});
+          console.error('Image failed to load:', this.src);
+          this.style.display = 'none';
+        ">
+    </div>
+    <p style="text-align: center; font-family: Arial, sans-serif;">Choose an action from the menu above to get started.</p>
+  </div>
+  <div id="loans" class="section">
+    <h2>💰 Loans & Schemes</h2>
+    <div
+      style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border: 2px solid #00bcd4; border-radius: 10px; padding: 15px; margin: 20px auto; max-width: 700px; text-align: left;">
+      <p style="color: #006064; font-size: 14px; line-height: 1.6; margin: 10px 0;">
+        <strong>📊 Loan & Scheme Calculator</strong><br>
+        Select the loan type or scheme you wish to apply for. Enter the loan amount, interest rate, and tenure.
+        Once you submit, the system will automatically calculate the compound interest, repayment amount, and tenure
+        details
+        based on your chosen scheme. The results will be displayed instantly in the same section, so you can clearly see
+        the total amount payable and repayment schedule without needing a separate calculator.
+      </p>
+    </div>
+
+    <div class="card" style="max-width: 700px;">
+      <h3>Available Products</h3>
+      <div
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 20px 0;">
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+          <h4 style="color: #0097a7; margin-top: 0;">🏠 Home Loan</h4>
+          <ul class="loan-list" style="font-size: 14px;">
+            <li>Interest: 8.4% p.a.</li>
+            <li>Up to 90% of property value</li>
+            <li>Tenure: up to 30 years</li>
+          </ul>
+        </div>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+          <h4 style="color: #0097a7; margin-top: 0;">👤 Personal Loan</h4>
+          <ul class="loan-list" style="font-size: 14px;">
+            <li>Interest: 10.5% p.a.</li>
+            <li>Loan up to ₹25 Lakhs</li>
+            <li>Flexible repayment</li>
+          </ul>
+        </div>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+          <h4 style="color: #0097a7; margin-top: 0;">🚗 Car Loan</h4>
+          <ul class="loan-list" style="font-size: 14px;">
+            <li>Interest: 8.5% p.a.</li>
+            <li>Up to 90% of car value</li>
+            <li>Tenure: up to 7 years</li>
+          </ul>
+        </div>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+          <h4 style="color: #0097a7; margin-top: 0;">🥇 Gold Loan</h4>
+          <ul class="loan-list" style="font-size: 14px;">
+            <li>Interest: 10.0% p.a.</li>
+            <li>Up to 75% of gold value</li>
+            <li>Tenure: up to 12 months</li>
+          </ul>
+        </div>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+          <h4 style="color: #0097a7; margin-top: 0;">💎 Fixed Deposit</h4>
+          <ul class="loan-list" style="font-size: 14px;">
+            <li>1 Year: 6.5% p.a.</li>
+            <li>3 Year: 7.0% p.a.</li>
+            <li>5 Year: 7.5% p.a.</li>
+          </ul>
+        </div>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+          <h4 style="color: #0097a7; margin-top: 0;">📈 Recurring Deposit</h4>
+          <ul class="loan-list" style="font-size: 14px;">
+            <li>Min: ₹500/month</li>
+            <li>Tenure: 6 months - 10 years</li>
+            <li>Interest at maturity</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="max-width: 700px; margin-top: 20px;">
+      <h3>Calculate Loan/Scheme Details</h3>
+      <div class="form-group">
+        <label for="loanSchemeType">Select Loan/Scheme Type *</label>
+        <select id="loanSchemeType" required onchange="updateInterestRate()">
+          <option value="">Select Type</option>
+          <option value="home" data-rate="8.4">Home Loan (8.4% p.a.)</option>
+          <option value="personal" data-rate="10.5">Personal Loan (10.5% p.a.)</option>
+          <option value="car" data-rate="8.5">Car Loan (8.5% p.a.)</option>
+          <option value="gold" data-rate="10.0">Gold Loan (10.0% p.a.)</option>
+          <option value="fd1" data-rate="6.5">Fixed Deposit - 1 Year (6.5% p.a.)</option>
+          <option value="fd3" data-rate="7.0">Fixed Deposit - 3 Years (7.0% p.a.)</option>
+          <option value="fd5" data-rate="7.5">Fixed Deposit - 5 Years (7.5% p.a.)</option>
+          <option value="rd" data-rate="7.0">Recurring Deposit (7.0% p.a.)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="calcLoanAmount">Loan/Deposit Amount (₹) *</label>
+        <input type="number" id="calcLoanAmount" placeholder="Enter amount" min="0" step="0.01" required />
+      </div>
+      <div class="form-group">
+        <label for="calcInterestRate">Interest Rate (% p.a.) *</label>
+        <input type="number" id="calcInterestRate" placeholder="Enter interest rate" min="0" max="100" step="0.1"
+          required />
+      </div>
+      <div class="form-group">
+        <label for="calcTenure">Tenure (Years) *</label>
+        <input type="number" id="calcTenure" placeholder="Enter tenure in years" min="0.1" max="30" step="0.1"
+          required />
+      </div>
+      <button class="action" onclick="calculateLoanDetails()">Calculate</button>
+      <div id="loan_calc_result" class="response" style="display: none;"></div>
+      <div id="loan_calc_details" style="display: none; margin-top: 20px;"></div>
+    </div>
+  </div>
+
+  <div id="loanForm" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h3 id="loanFormTitle">Loan Application</h3>
+      <div class="form-group">
+        <label for="fullName">Full Name *</label>
+        <input type="text" id="fullName" placeholder="Full Name" required>
+      </div>
+      <div class="form-group">
+        <label for="email">Email Address *</label>
+        <input type="email" id="email" placeholder="Email Address" required>
+      </div>
+      <div class="form-group">
+        <label for="phone">Phone Number *</label>
+        <input type="tel" id="phone" placeholder="Phone Number" required>
+      </div>
+      <div class="form-group">
+        <label for="loanAmount">Loan Amount (₹) *</label>
+        <input type="number" id="loanAmount" placeholder="Loan 
+Amount" required>
+      </div>
+      <div class="form-group">
+        <label for="loanTenure">Loan Tenure *</label>
+        <select id="loanTenure" required>
+          <option value="">Select Loan Tenure</option>
+          <option value="1">1 Year</option>
+          <option value="3">3 Years</option>
+          <option value="5">5 Years</option>
+          <option value="7">7 Years</option>
+          <option value="10">10 Years</option>
+        </select>
+      </div>
+      <button class="action" onclick="submitLoanApplication()">Submit
+        Application</button>
+      <div id="response_loan" class="response"></div>
+    </div>
+  </div>
+  </div>
+
+  <div id="ageConfirmModal" class="modal">
+    <div class="modal-content">
+      <h3>Age Verification</h3>
+      <p style="font-size: 18px; margin: 20px 0;">Are you above 18?</p>
+      <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+        <button class="action" onclick="handleAgeConfirmation(true)" style="width: 120px; background: linear-gradient(135deg, #51cf66, 
+#40c057);">Yes</button>
+        <button class="action" onclick="handleAgeConfirmation(false)" style="width: 120px; background: linear-gradient(135deg, #ff6b6b, 
+#fa5252);">No</button>
+      </div>
+    </div>
+  </div>
+  <div class="section" id="open">
+    <h2>Open Account</h2>
+    <div class="form-group">
+      <label for="open_name">Full Name *</label>
+      <input type="text" id="open_name" placeholder="Your Name" required />
+    </div>
+    <div class="form-group">
+      <label for="open_age">Age *</label>
+      <input type="number" id="open_age" placeholder="Your Age" min="18" max="120" required />
+    </div>
+    <div class="form-group">
+      <label for="open_location">Location *</label>
+      <input type="text" id="open_location" placeholder="City / State" required />
+    </div>
+    <div class="form-group">
+      <label for="open_income">Income (₹) *</label>
+      <input type="number" id="open_income" placeholder="Monthly Income" min="0" required />
+    </div>
+    <div class="form-group">
+      <label for="open_account_type">Type of Account *</label>
+      <select id="open_account_type" required>
+        <option value="">Select Account Type</option>
+        <option value="Savings">Savings Account</option>
+        <option value="Current">Current Account</option>
+        <option value="Fixed Deposit">Fixed Deposit</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="open_pass">Set Password *</label>
+      <input type="password" id="open_pass" placeholder="Set Password" required />
+    </div>
+
+    <div
+      style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border: 2px solid #00bcd4; border-radius: 10px; padding: 15px; margin: 20px auto; max-width: 500px; text-align: left;">
+      <h4 style="color: #0097a7; margin-top: 0; display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 20px;">📷</span> Camera Permission Required
+      </h4>
+      <p style="color: #006064; font-size: 14px; line-height: 1.6; margin: 10px 0;">
+        When you submit this form, you will be asked to grant permission for your device's camera.
+        This ensures that your face image is securely captured and stored along with your account details
+        in our system, linked to your unique account number.
+      </p>
+      <p style="color: #006064; font-size: 14px; line-height: 1.6; margin: 10px 0; font-weight: 500;">
+        <strong>🔒 Security Note:</strong> The capture always uses <strong>your own device's camera</strong> —
+        not the server's — so wherever you are globally, your face is recorded directly from your device
+        for verification and security purposes.
+      </p>
+    </div>
+
+    <button class="action" onclick="submit('open_account', 'response_open')">Submit</button>
+    <div id="response_open" class="response"></div>
+    <p style="font-size: 12px; color: #666; margin-top: 10px;">* Fields are required. You must be 18+ to open an
+      account. Account number will be auto-generated.</p>
+  </div>
+
+  <div class="section" id="deposit">
+    <h2>Deposit</h2>
+    <div class="form-group">
+      <label for="dep_name">Your Name *</label>
+      <input type="text" id="dep_name" placeholder="Your Name" required />
+    </div>
+    <div class="form-group">
+      <label for="dep_acc">Account Number *</label>
+      <input type="text" id="dep_acc" placeholder="Account Number" required />
+    </div>
+    <div class="form-group">
+      <label for="dep_pass">Password *</label>
+      <input type="password" id="dep_pass" placeholder="Password" required />
+    </div>
+    <div class="form-group">
+      <label for="dep_amt">Amount (₹) *</label>
+      <input type="number" id="dep_amt" placeholder="Amount (₹)" required />
+    </div>
+
+    <div
+      style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border: 2px solid #00bcd4; border-radius: 10px; padding: 12px; margin: 15px auto; max-width: 500px; text-align: left;">
+      <p style="color: #006064; font-size: 13px; line-height: 1.5; margin: 5px 0;">
+        <strong>📷 Camera Required:</strong> You will be asked to grant camera permission for face verification.
+        Your face image is captured from <strong>your device's camera</strong> and securely stored for security
+        purposes.
+      </p>
+    </div>
+
+    <button class="action" onclick="submit('deposit', 
+'response_deposit')">Submit</button>
+    <button class="action" id="retry_deposit" style="display:none;" onclick="submit('deposit', 'response_deposit')"> 🔄
+      Try
+      Again</button>
+    <div id="response_deposit" class="response"></div>
+  </div>
+  <div class="section" id="withdraw">
+    <h2>Withdraw</h2>
+    <div class="form-group">
+      <label for="with_name">Your Name *</label>
+      <input type="text" id="with_name" placeholder="Your Name" required />
+    </div>
+    <div class="form-group">
+      <label for="with_acc">Account Number *</label>
+      <input type="text" id="with_acc" placeholder="Account Number" required />
+    </div>
+    <div class="form-group">
+      <label for="with_pass">Password *</label>
+      <input type="password" id="with_pass" placeholder="Password" required />
+    </div>
+    <div class="form-group">
+      <label for="with_amt">Amount (₹) *</label>
+      <input type="number" id="with_amt" placeholder="Amount (₹)" required />
+    </div>
+
+    <div
+      style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border: 2px solid #00bcd4; border-radius: 10px; padding: 12px; margin: 15px auto; max-width: 500px; text-align: left;">
+      <p style="color: #006064; font-size: 13px; line-height: 1.5; margin: 5px 0;">
+        <strong>📷 Camera Required:</strong> You will be asked to grant camera permission for face verification.
+        Your face image is captured from <strong>your device's camera</strong> and securely stored for security
+        purposes.
+      </p>
+    </div>
+
+    <button class="action" onclick="submit('withdraw', 
+'response_withdraw')">Submit</button>
+    <button class="action" id="retry_withdraw" style="display:none;" onclick="submit('withdraw', 'response_withdraw')">
+      🔄 Try
+      Again</button>
+    <div id="response_withdraw" class="response"></div>
+  </div>
+
+  <div class="section" id="check">
+    <h2>Check Balance</h2>
+    <div class="form-group">
+      <label for="check_acc">Account Number *</label>
+      <input type="text" id="check_acc" placeholder="Account Number" required />
+    </div>
+    <div class="form-group">
+      <label for="check_pass">Password *</label>
+      <input type="password" id="check_pass" placeholder="Password" required />
+    </div>
+    <button class="action" onclick="submit('check_balance', 
+'response_check')">Submit</button>
+    <div id="response_check" class="response"></div>
+  </div>
+
+  <div class="section" id="passbook">
+    <h2>� Digital Passbook</h2>
+    <div
+      style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border: 2px solid #00bcd4; border-radius: 10px; padding: 15px; margin: 20px auto; max-width: 600px; text-align: left;">
+      <p style="color: #006064; font-size: 14px; line-height: 1.6; margin: 10px 0;">
+        <strong>🔐 Secure Passbook Access</strong><br>
+        To view your digital passbook, please enter your Account Number and Password, then allow camera access for a
+        quick face capture.
+        Once verified, your full passbook — including account holder info, balance, and transactions —
+        will be securely displayed.
+      </p>
+    </div>
+    <div id="passbook_form">
+      <div class="form-group">
+        <label for="passbook_acc">Account Number *</label>
+        <input type="text" id="passbook_acc" placeholder="Account Number" required />
+      </div>
+      <div class="form-group">
+        <label for="passbook_pass">Password *</label>
+        <input type="password" id="passbook_pass" placeholder="Password" required />
+      </div>
+
+      <div
+        style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border: 2px solid #00bcd4; border-radius: 10px; padding: 12px; margin: 15px auto; max-width: 500px; text-align: left;">
+        <p style="color: #006064; font-size: 13px; line-height: 1.5; margin: 5px 0;">
+          <strong>📷 Camera Required:</strong> You will be asked to grant camera permission for face verification.
+        </p>
+      </div>
+
+      <button class="action" onclick="openPassbook()">View Passbook</button>
+      <div id="response_passbook" class="response"></div>
+    </div>
+    <div id="passbook_content" style="display: none; margin-top: 30px;"></div>
+  </div>
+
+  <div class="section" id="failure_page">
+    <h2 style="color: red;">❌ Verification Failed</h2>
+    <div
+      style="background: linear-gradient(135deg, #ffcccc, #ff9999); border: 2px solid red; border-radius: 10px; padding: 20px; margin: 20px auto; max-width: 600px; text-align: center;">
+      <h3 id="failure_msg" style="color: darkred; margin-top: 0;">Face capture failed. Please try again.</h3>
+      <p id="failure_submsg" style="color: #555; font-size: 16px; margin: 10px 0;"></p>
+      <div id="appeal_link" style="display: none; margin-top: 20px;">
+        <p>For assistance and appeal, please <a href="#" onclick="showSection('support')">Contact Support</a>.</p>
+      </div>
+    </div>
+    <button class="action" onclick="showSection('passbook')" id="retry_passbook_btn">Back to Passbook</button>
+  </div>
+
+  <div class="section" id="history">
+    <h2>📜 Transaction History</h2>
+    <div
+      style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border: 2px solid #00bcd4; border-radius: 10px; padding: 15px; margin: 20px auto; max-width: 600px; text-align: left;">
+      <p style="color: #006064; font-size: 14px; line-height: 1.6; margin: 10px 0;">
+        <strong>📋 Transaction History</strong><br>
+        Your transaction history is displayed in a structured table format — no extra descriptions. Each row shows Date
+        & Time, Name, Transaction Type (e.g., Deposit, Withdrawal), Amount, and Balance After.<br><br>
+        <strong>📋 Account Details</strong><br>
+        To view or update your account details, use the Detail Section. Enter your Name and Password, then allow camera
+        access for face verification. Once verified, you can view your account number, balance, and reset your password
+        securely.<br><br>
+        <strong>💾 Data Storage</strong><br>
+        All information — including personal details, face image, account number, and transaction history — is stored in
+        the system's accounts.json file to ensure complete and secure record-keeping.
+      </p>
+    </div>
+    <div class="form-group">
+      <label for="hist_acc">Account Number *</label>
+      <input id="history-acc" placeholder="Account Number">
+
+    </div>
+    <div class="form-group">
+      <label for="hist_pass">Password *</label>
+      <input id="history-pass" type="password" placeholder="Password">
+    </div>
+
+    <button class="action" onclick="getHistory()">View
+      History</button>
+    <div id="history_result" class="response"></div>
+    <div id="history_table_container"> </div>
+    <div id="history_detail_section" style="display: none; margin-top: 30px;"></div>
+  </div>
+  <div class="section" id="close">
+    <h2>Close Account</h2>
+    <div class="form-group">
+      <label for="close_name">Your Name *</label>
+      <input type="text" id="close_name" placeholder="Your Name" required />
+    </div>
+    <div class="form-group">
+      <label for="close_acc">Account Number *</label>
+      <input type="text" id="close_acc" placeholder="Account Number" required />
+    </div>
+    <div class="form-group">
+      <label for="close_pass">Password *</label>
+      <input type="password" id="close_pass" placeholder="Password" required />
+    </div>
+
+    <div
+      style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border: 2px solid #00bcd4; border-radius: 10px; padding: 12px; margin: 15px auto; max-width: 500px; text-align: left;">
+      <p style="color: #006064; font-size: 13px; line-height: 1.5; margin: 5px 0;">
+        <strong>📷 Camera Required:</strong> You will be asked to grant camera permission for face verification.
+        Your face image is captured from <strong>your device's camera</strong> and securely stored for security
+        purposes.
+      </p>
+    </div>
+
+    <button class="action" onclick="submit('close_account', 
+'response_close')">Submit</button>
+    <div id="response_close" class="response"></div>
+  </div>
+  <div class="section" id="support">
+    <h2> 💬 Customer Support</h2>
+    <div class="chat-box">
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-message bot">Hello! 👋 I'm SmartBot. How can
+          I help you today?</div>
+      </div>
+      <div class="chat-input">
+        <input type="text" id="chatInput" placeholder="Type your 
+message..." />
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+
+  </div>
+  <div class="section" id="ai-chat">
+    <h2>🤖 SmartBank AI Assistant</h2>
+    <div class="ai-chat-box">
+      <div class="ai-chat-messages" id="aiChatMessages">
+        <div class="ai-chat-message bot">Hello! I'm your SmartBank AI
+          assistant. I'll keep replies concise, secure, and professional.</div>
+      </div>
+      <div class="ai-chat-input">
+        <input type="text" id="aiChatInput" placeholder="Ask about 
+services, accounts, transactions, eligibility..." />
+        <button onclick="aiSendMessage()">Send</button>
+      </div>
+    </div>
+    <p style="margin-top: 12px; font-size: 14px; color: #0b7285;">
+      I respond in English, avoid passwords or full account numbers, and
+      won't overpromise eligibility. If unsure, I'll ask for clarification or
+      suggest contacting support.
+    </p>
+  </div>
+  <footer>
+    <p>© 2025 SmartBank 3D — Created with passion by Dhiresh</p>
+    <p style="margin-top: 10px;">Support: <a href="tel:1800123456">1800-123-456</a> | Email: <a
+        href="mailto:support@SmartBank3D.com">support@SmartBank3D.com</a></p>
+  </footer>
+
+  <script>
+
+    function speak(text) {
+      const msg = new SpeechSynthesisUtterance(text);
+      msg.lang = "en-IN";
+      msg.rate = 1;
+      window.speechSynthesis.speak(msg);
+    }
+    const LOCK_DURATION_MS = 7000; // lock duration while voice plays
+    let isLocked = false;
+    let messageTimeouts = {};
+    let isInitialLoad = true;
+
+    // AI Chat state
+    const aiChatMessagesEl = () =>
+      document.getElementById("aiChatMessages");
+    const aiChatInputEl = () => document.getElementById("aiChatInput");
+
+    function aiAddMessage(role, text) {
+      const container = aiChatMessagesEl();
+      if (!container) return;
+      const msgEl = document.createElement("div");
+      msgEl.className = `ai-chat-message ${role}`;
+      msgEl.textContent = text;
+      container.appendChild(msgEl);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function aiSendMessage() {
+      const input = aiChatInputEl();
+      if (!input) return;
+      const text = input.value.trim();
+      if (!text) return;
+
+      aiAddMessage("user", text);
+      input.value = "";
+
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'index.html:aiSendMessage',
+          message: 'Sending AI chat request',
+          data: { len: text.length },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'A'
+        })
+      }).catch(() => ({}));
+
+      aiAddMessage("bot", "Let me check that for you...");
+      try {
+        const res = await fetch("/ai_chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text })
+        });
+
+        if (!res.ok) {
+          aiAddMessage("bot", "I couldn't reach the assistant right now. Please try again.");
+          return;
+        }
+
+        const data = await res.json();
+        const reply = data.reply || "I'm here to help with SmartBank services. How can I assist you?";
+        aiAddMessage("bot", reply);
+
+      } catch (err) {
+        aiAddMessage("bot", "Something went wrong. Please try again.");
+      }
+    }
+
+    function showMessage(elementId, message) {
+      const element = document.getElementById(elementId);
+      if (!element) return;
+
+      // Clear any existing timeout for this element
+      if (messageTimeouts[elementId]) {
+        clearTimeout(messageTimeouts[elementId]);
+      }
+
+      // Show the message
+      element.innerText = message;
+      element.style.display = 'block';
+
+      // Auto-hide after 2.5 seconds
+      messageTimeouts[elementId] = setTimeout(() => {
+        element.innerText = "";
+        element.style.display = 'none';
+        delete messageTimeouts[elementId];
+      }, 2500);
+    }
+    function playAudioForSection(sectionName) {
+      try {
+        let audio = new Audio(`/static/audio/${sectionName}.mp3`);
+        audio.play().catch(err => {
+          console.log("Audio file not found or cannot play:", err);
+        });
+      } catch (err) {
+        console.log("Audio playback error:", err);
+      }
+    }
+
+    // Controls visibility of sections based on application state
+    function showSection(id) {
+      if (isLocked) {
+        const activeSection = document.querySelector('.section.active');
+        if (activeSection) {
+          const responseEl = activeSection.querySelector('.response');
+          if (responseEl && responseEl.id) {
+            showMessage(responseEl.id, "Wait for a While!");
+          }
+        }
+        return;
+      }
+      isLocked = true;
+      // #region agent log (Navigation locked)
+      fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'index.html:showSection',
+          message: 'Navigation locked',
+          data: { sectionId: id, durationMs: LOCK_DURATION_MS },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'A'
+        })
+      }).catch(() => ({}));
+      // #endregion
+
+      playAudioForSection(id);
+      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+      const activeSec = document.getElementById(id);
+      if (activeSec) {
+        activeSec.classList.add('active');
+        // #region agent log
+        if (id === 'home') {
+          // Only play theme line if not initial page load (window.onload handles initial sequence)
+          if (!isInitialLoad) {
+            fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                location: 'index.html:showSection',
+                message: 'Playing home section audio on navigation',
+                data: { sectionId: id, audioMessage: 'Tech bhi smart, Paise bhi safe!' },
+                timestamp: Date.now(),
+                sessionId: 'debug-session',
+                runId: 'run1',
+                hypothesisId: 'A'
+              })
+            }).catch(() => ({}));
+            // #endregion
+            speak("Tech bhi smart, Paise bhi safe!");
+          }
+        } else {
+          isInitialLoad = false;
+          // Mark as not initial load when navigating to other sections
+          speak("You are now in the " + id.replace("_", " ") + " section.");
+        }
+      }
+
+      setTimeout(() => {
+        isLocked = false;
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            location: 'index.html:showSection',
+            message: 'Navigation unlocked',
+            data: { sectionId: id },
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'A'
+          })
+        }).catch(() => ({}));
+        // #endregion
+      }, LOCK_DURATION_MS);
+    }
+
+    function showLoanForm(loanType) {
+      document.getElementById('loanFormTitle').textContent =
+        loanType.charAt(0).toUpperCase() + loanType.slice(1) + ' Loan Application';
+      document.getElementById('loanForm').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('loanForm').style.display = 'none';
+    }
+
+    function closeAgeModal() {
+      document.getElementById('ageConfirmModal').style.display = 'none';
+    }
+
+    function updateInterestRate() {
+      const select = document.getElementById('loanSchemeType');
+      const interestInput = document.getElementById('calcInterestRate');
+      if (select && interestInput && select.value) {
+        const selectedOption = select.options[select.selectedIndex];
+        const rate = selectedOption.getAttribute('data-rate');
+        if (rate) {
+          interestInput.value = rate;
+        }
+      }
+    }
+
+    function calculateLoanDetails() {
+      const type = document.getElementById('loanSchemeType').value;
+      const amount = parseFloat(document.getElementById('calcLoanAmount').value);
+      const interestRate = parseFloat(document.getElementById('calcInterestRate').value);
+      const tenure = parseFloat(document.getElementById('calcTenure').value);
+      const resultDiv = document.getElementById('loan_calc_result');
+      const detailsDiv = document.getElementById('loan_calc_details');
+
+      // Validation
+      if (!type || !amount || !interestRate || !tenure || amount <= 0 || interestRate <= 0 || tenure <= 0) {
+        showMessage('loan_calc_result', 'Please fill in all fields with valid values.');
+        detailsDiv.style.display = 'none';
+        return;
+      }
+
+      // Calculate compound interest
+      // A = P(1 + r/n)^(nt)
+      // For annual compounding: A = P(1 + r)^t
+      const r = interestRate / 100; // Convert percentage to decimal
+      const t = tenure; // Time in years
+
+      // Compound Interest Formula: A = P(1 + r)^t
+      const totalAmount = amount * Math.pow(1 + r, t);
+      const compoundInterest = totalAmount - amount;
+
+      // For loans: Calculate EMI (Equated Monthly Installment)
+      // EMI = [P x R x (1+R)^N] / [(1+R)^N - 1]
+      // Where P = Principal, R = Monthly Interest Rate, N = Number of months
+      const monthlyRate = r / 12;
+      const numMonths = tenure * 12;
+      let emi = 0;
+      let totalRepayment = 0;
+
+      if (type.includes('fd') || type === 'rd') {
+        // For deposits, show maturity amount
+        totalRepayment = totalAmount;
+      } else {
+        // For loans, calculate EMI
+        if (monthlyRate > 0) {
+          emi = (amount * monthlyRate * Math.pow(1 + monthlyRate, numMonths)) /
+            (Math.pow(1 + monthlyRate, numMonths) - 1);
+          totalRepayment = emi * numMonths;
+        } else {
+          emi = amount / numMonths;
+          totalRepayment = amount;
+        }
+      }
+
+      // Display results
+      resultDiv.style.display = 'block';
+      resultDiv.className = 'response success';
+
+      let resultHTML = `<h4 style="color: #0097a7; margin-top: 0;">📊 Calculation Results</h4>`;
+
+      if (type.includes('fd') || type === 'rd') {
+        // Deposit scheme results
+        resultHTML += `<div style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border-radius: 10px; padding: 20px; margin: 15px 0;">`;
+        resultHTML += `<p style="font-size: 16px; margin: 10px 0;"><strong>Principal Amount:</strong> ₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>`;
+        resultHTML += `<p style="font-size: 16px; margin: 10px 0;"><strong>Interest Rate:</strong> ${interestRate}% p.a.</p>`;
+        resultHTML += `<p style="font-size: 16px; margin: 10px 0;"><strong>Tenure:</strong> ${tenure} years</p>`;
+        resultHTML += `<p style="font-size: 18px; margin: 15px 0; color: #0097a7;"><strong>Compound Interest Earned:</strong> ₹${compoundInterest.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>`;
+        resultHTML += `<p style="font-size: 20px; margin: 15px 0; color: #00bcd4; font-weight: bold;"><strong>Maturity Amount:</strong> ₹${totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>`;
+        resultHTML += `</div>`;
+      } else {
+        // Loan results
+        resultHTML += `<div style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border-radius: 10px; padding: 20px; margin: 15px 0;">`;
+        resultHTML += `<p style="font-size: 16px; margin: 10px 0;"><strong>Loan Amount:</strong> ₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>`;
+        resultHTML += `<p style="font-size: 16px; margin: 10px 0;"><strong>Interest Rate:</strong> ${interestRate}% p.a.</p>`;
+        resultHTML += `<p style="font-size: 16px; margin: 10px 0;"><strong>Tenure:</strong> ${tenure} years (${numMonths} months)</p>`;
+        resultHTML += `<p style="font-size: 18px; margin: 15px 0; color: #0097a7;"><strong>Monthly EMI:</strong> ₹${emi.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>`;
+        resultHTML += `<p style="font-size: 18px; margin: 15px 0; color: #ff6b6b;"><strong>Total Interest Payable:</strong> ₹${(totalRepayment - amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>`;
+        resultHTML += `<p style="font-size: 20px; margin: 15px 0; color: #00bcd4; font-weight: bold;"><strong>Total Amount Payable:</strong> ₹${totalRepayment.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>`;
+        resultHTML += `</div>`;
+      }
+
+      resultDiv.innerHTML = resultHTML;
+
+      // Generate repayment schedule
+      let scheduleHTML = `<div class="card" style="max-width: 100%; margin-top: 20px;">
+    <h4 style="color: #0097a7; margin-bottom: 15px;">📅 Repayment Schedule</h4>
+    <div style="max-height: 400px; overflow-y: auto;">
+      <table class="history-table" style="width: 100%;">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Principal (₹)</th>
+            <th>Interest (₹)</th>
+            <th>EMI (₹)</th>
+            <th>Outstanding Balance (₹)</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      if (type.includes('fd') || type === 'rd') {
+        // For deposits, show year-wise growth
+        for (let year = 1; year <= Math.ceil(tenure); year++) {
+          const yearAmount = amount * Math.pow(1 + r, Math.min(year, tenure));
+          const yearInterest = yearAmount - amount;
+          scheduleHTML += `<tr>
+        <td>Year ${year}</td>
+        <td>₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td>₹${yearInterest.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td>-</td>
+        <td>₹${yearAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+      </tr>`;
+        }
+      } else {
+        // For loans, show month-wise EMI breakdown
+        let outstandingBalance = amount;
+        for (let month = 1; month <= numMonths; month++) {
+          const interestComponent = outstandingBalance * monthlyRate;
+          const principalComponent = emi - interestComponent;
+          outstandingBalance = Math.max(0, outstandingBalance - principalComponent);
+
+          scheduleHTML += `<tr>
+        <td>${month}</td>
+        <td>₹${principalComponent.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td>₹${interestComponent.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td>₹${emi.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td>₹${outstandingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+      </tr>`;
+
+          // Show only first 12 months and last 12 months for long tenures
+          if (numMonths > 24 && month === 12) {
+            scheduleHTML += `<tr><td colspan="5" style="text-align: center; color: #666; font-style: italic;">... (showing first 12 months) ...</td></tr>`;
+            month = numMonths - 12;
+          }
+        }
+      }
+
+      scheduleHTML += `</tbody></table></div></div>`;
+      detailsDiv.innerHTML = scheduleHTML;
+      detailsDiv.style.display = 'block';
+      detailsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      // Speak the results
+      if (type.includes('fd') || type === 'rd') {
+        speak(`Maturity amount is ₹${Math.round(totalAmount).toLocaleString('en-IN')}`);
+      } else {
+        speak(`Monthly EMI is ₹${Math.round(emi).toLocaleString('en-IN')} and total amount payable is ₹${Math.round(totalRepayment).toLocaleString('en-IN')}`);
+      }
+
+      if (typeof confetti === "function") {
+        confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+      }
+    }
+
+    let pendingAccountData = null;
+    let pendingResponseId = null;
+
+    function showAgeConfirmationModal(accountData, responseId) {
+      pendingAccountData = accountData;
+      pendingResponseId = responseId;
+      document.getElementById('ageConfirmModal').style.display = 'flex';
+    }
+    async function handleAgeConfirmation(isAbove18) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'index.html:handleAgeConfirmation',
+          message: 'Age confirmation response',
+          data: {
+            isAbove18: isAbove18,
+            hasPendingData: !!pendingAccountData
+          },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'A'
+        })
+      }).catch(() => ({}));
+      // #endregion
+
+      closeAgeModal();
+
+      if (!isAbove18) {
+        if (pendingResponseId) {
+          showMessage(
+            pendingResponseId,
+            "Sorry, you must be at least 18 years old to open an account."
+          );
+        }
+        pendingAccountData = null;
+        pendingResponseId = null;
+        return;
+      }
+
+      // User confirmed they are above 18, proceed with account creation
+      if (pendingAccountData && pendingResponseId) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            location: 'index.html:handleAgeConfirmation',
+            message: 'Age verified, proceeding to account creation',
+            data: {
+              name: pendingAccountData.name,
+              age: pendingAccountData.age,
+              ageVerified: true
+            },
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'B'
+          })
+        }).catch(() => ({}));
+        // #endregion
+
+        const data = {
+          name: pendingAccountData.name,
+          age: pendingAccountData.age,
+          income: pendingAccountData.income,
+          account_type: pendingAccountData.accountType,
+          pass: pendingAccountData.password,
+          amount: 0
+          // acc_no will be auto-generated by backend
+        };
+
+        try {
+          // Log: submitting account creation request
+          fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'index.html:handleAgeConfirmation',
+              message: 'Submitting account creation request',
+              data: { name: data.name, age: data.age, income: data.income, account_type: data.account_type },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'B'
+            })
+          }).catch(() => ({}));
+
+          const res = await fetch('/open_account', {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+          });
+
+          // Log: account creation response received
+          fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'index.html:handleAgeConfirmation',
+              message: 'Account creation response received',
+              data: { status: res.status, statusText: res.statusText },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'B'
+            })
+          }).catch(() => ({}));
+
+          const json = await res.json();
+
+          // Log: account creation result
+          fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'index.html:handleAgeConfirmation',
+              message: 'Account creation result',
+              data: { status: json.status, message: json.message, accountNumber: json.account_number },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'B'
+            })
+          }).catch(() => ({}));
+
+          // Display success message with account details
+          let successMessage = json.message || "Account opened successfully.";
+          if (json.account_number) {
+            successMessage += "<br><br><strong style='font-size: 16px; color: #0097a7;'>Account Details:</strong><br>";
+            successMessage += `<div style='margin-top: 10px; padding: 10px; background: white; border-radius: 5px;'>`;
+            successMessage += `Account Number: <strong style='color: #00bcd4; font-size: 18px;'>${json.account_number}</strong><br>`;
+            successMessage += `Name: ${json.name || data.name}<br>`;
+            successMessage += `Age: ${json.age || data.age} years<br>`;
+            successMessage += `Income: ₹${json.income || data.income}<br>`;
+            successMessage += `Account Type: ${json.account_type || data.account_type}`;
+            successMessage += `</div>`;
+          }
+          const responseEl = document.getElementById(pendingResponseId);
+          if (responseEl) {
+            responseEl.innerHTML = successMessage;
+            responseEl.className = 'response success';
+            responseEl.style.display = 'block';
+            // Auto-hide after 15 seconds (longer for account details)
+            if (messageTimeouts[pendingResponseId]) {
+              clearTimeout(messageTimeouts[pendingResponseId]);
+            }
+            messageTimeouts[pendingResponseId] = setTimeout(() => {
+              responseEl.innerHTML = '';
+              responseEl.style.display = 'none';
+              delete messageTimeouts[pendingResponseId];
+            }, 15000);
+          }
+          if (json.message) speak(json.message);
+
+        } catch (error) {
+          // Log: account creation error
+          fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'index.html:handleAgeConfirmation',
+              message: 'Account creation error',
+              data: { error: error.message, errorStack: error.stack },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'B'
+            })
+          }).catch(() => ({}));
+
+          console.error("Error:", error);
+          showMessage(pendingResponseId, "An error occurred while processing your request. Please check your camera and try again.");
+        }
+
+        pendingAccountData = null;
+        pendingResponseId = null;
+      }
+    }
+
+    function submitLoanApplication() {
+      const name = document.getElementById('fullName').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const amount = document.getElementById('loanAmount').value.trim();
+      const tenure = document.getElementById('loanTenure').value;
+
+      if (!name || !email || !phone || !amount || !tenure) {
+        showMessage('response_loan', 'Please fill in all required fields');
+        return;
+      }
+      let successMessage = 'Thank you for your application! We will contact you shortly.';
+      const loanType = document.getElementById('loanFormTitle').textContent.toLowerCase();
+      if (loanType.includes('car')) {
+        successMessage = 'Thank you for your car loan application! Our representative will contact you shortly with the next steps.';
+      } else if (loanType.includes('gold')) {
+        successMessage = 'Thank you for your gold loan application! Please visit your nearest branch with your gold for valuation.';
+      } else if (loanType.includes('home')) {
+        successMessage = 'Thank you for your home loan application! Our home loan specialist will contact you shortly.';
+      } else if (loanType.includes('personal')) {
+        successMessage = 'Thank you for your personal loan application! We will process your request and get back to you soon.';
+      }
+
+      showMessage('response_loan', successMessage);
+      setTimeout(() => {
+        closeModal();
+      }, 2500);
+      document.getElementById('fullName').value = '';
+      document.getElementById('email').value = '';
+      document.getElementById('phone').value = '';
+      document.getElementById('loanAmount').value = '';
+      document.getElementById('loanTenure').value = '';
+    }
+    window.onclick = function (event) {
+      const loanModal = document.getElementById('loanForm');
+      const ageModal = document.getElementById('ageConfirmModal');
+      if (event.target == loanModal) {
+        closeModal();
+      }
+      if (event.target == ageModal) {
+        closeAgeModal();
+        pendingAccountData = null;
+        pendingResponseId = null;
+      }
+    }
+
+    async function getHistory() {
+      const acc = document.getElementById("history-acc").value.trim();
+      const pass = document.getElementById("history-pass").value.trim();
+      const resultBox = document.getElementById("history_result");
+      const container = document.getElementById("history_table_container");
+
+      if (!acc || !pass) {
+        showMessage("history_result", "Please enter both account number and password.");
+        const detailSection = document.getElementById("history_detail_section");
+        if (detailSection) {
+          detailSection.style.display = "none";
+        }
+        return;
+      }
+      showMessage("history_result", "Loading transactions...");
+      container.innerHTML = "";
+      const detailSection = document.getElementById("history_detail_section");
+      if (detailSection) {
+        detailSection.style.display = "none";
+      }
+      try {
+        const res = await fetch('/transaction_history', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ account_number: acc, password: pass })  // ✅ aligned with backend
+        });
+        if (!res.ok) {
+          const txt = await res.text();
+          showMessage("history_result", "Failed to fetch history.");
+          console.error("History fetch failed:", res.status, txt);
+          speak("Failed to fetch history.");
+          return;
+        }
+        const data = await res.json();
+
+        if (data.error || data.success === false) {
+          const msg = data.message || data.error || "Invalid response.";
+          showMessage("history_result", msg);
+          speak(msg);
+          container.innerHTML = "";
+          const detailSection = document.getElementById("history_detail_section");
+          if (detailSection) {
+            detailSection.style.display = "none";
+          }
+          return;
+        }
+        const history = Array.isArray(data) ? data : (data.history || []);
+
+        if (!history || history.length === 0) {
+          showMessage("history_result", "No transactions found.");
+          speak("No transactions found.");
+          container.innerHTML = "";
+          const detailSection = document.getElementById("history_detail_section");
+          if (detailSection) {
+            detailSection.style.display = "none";
+          }
+          return;
+        }
+
+        // Filter out empty, null, or invalid transactions to ensure no empty rows
+        const validTransactions = history.filter(tx => {
+          if (typeof tx === "string") return tx.trim().length > 0;
+          if (!tx || typeof tx !== "object") return false;
+          // Ensure transaction has at least a date or type or amount
+          return (tx.date || tx.timestamp || tx.type || tx.amount !== undefined || tx.balance !== undefined);
+        });
+
+        if (validTransactions.length === 0) {
+          showMessage("history_result", "No valid transactions found.");
+          speak("No valid transactions found.");
+          container.innerHTML = "";
+          const detailSection = document.getElementById("history_detail_section");
+          if (detailSection) {
+            detailSection.style.display = "none";
+          }
+          return;
+        }
+
+        showMessage("history_result", `Showing ${validTransactions.length} complete transaction(s) with full details.`);
+        speak(`Showing your complete transaction history with ${validTransactions.length} transactions.`);
+
+        fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'index.html:getHistory', message: 'Displaying transaction history', data: { transactionCount: validTransactions.length, sampleTx: validTransactions[0] }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) }).catch(() => { });
+
+        // Get account name from response
+        const accountName = data.account_name || "";
+
+        let table = `<table class="history-table">
+      <thead><tr><th>Date & Time</th><th>Name</th><th>Transaction Type</th><th>Amount (₹)</th><th>Balance After (₹)</th></tr></thead><tbody>`;
+        validTransactions.forEach(tx => {
+          if (typeof tx === "string") {
+            // Only add string transactions if they're not empty
+            if (tx.trim().length > 0) {
+              table += `<tr><td colspan="5" style="text-align: center; padding: 15px; color: #666;">${escapeHtml(tx)}</td></tr>`;
+            }
+          } else {
+            // Process object transactions with complete details
+            const rawDate = tx.date || tx.timestamp || "";
+            let formattedDate = "-";
+            if (rawDate) {
+              try {
+                formattedDate = new Date(rawDate).toLocaleString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit"
+                });
+              } catch (e) {
+                formattedDate = rawDate; // Fallback to raw date string
+              }
+            }
+
+            // Determine transaction type with better detection
+            let txType = tx.type || "";
+            if (!txType || txType === "-" || txType === "") {
+              const desc = (tx.description || tx.transaction_type || "").toLowerCase();
+              if (desc.includes("deposit") || desc.includes("credit")) txType = "Deposit";
+              else if (desc.includes("withdraw") || desc.includes("withdrawal") || desc.includes("debit")) txType = "Withdrawal";
+              else if (desc.includes("balance") || desc.includes("check")) txType = "Balance Check";
+              else txType = "Transaction";
+            }
+
+            // Format amount - show "-" for balance checks, otherwise show amount
+            let amount = "-";
+            if (txType === "Balance Check" || txType === "Info") {
+              amount = "-";
+            } else if (tx.amount !== undefined && tx.amount !== null && tx.amount !== "") {
+              amount = `₹${parseFloat(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            }
+
+            // Format balance - always show if available
+            let balance = "-";
+            if (tx.balance !== undefined && tx.balance !== null && tx.balance !== "") {
+              balance = `₹${parseFloat(tx.balance).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            }
+
+            // Style based on transaction type
+            const typeClass = txType.toLowerCase().includes("credit") || txType.toLowerCase().includes("deposit") ? "badge-deposit"
+              : txType.toLowerCase().includes("debit") || txType.toLowerCase().includes("withdraw") ? "badge-withdraw"
+                : "badge-neutral";
+
+            // Convert to display format: Credit -> Deposit, Debit -> Withdrawal
+            const typeDisplay = txType === "Credit" ? "Deposit"
+              : txType === "Debit" ? "Withdrawal"
+                : txType === "Deposit" ? "Deposit"
+                  : txType === "Withdrawal" ? "Withdrawal"
+                    : txType === "Balance Check" ? "Balance Check"
+                      : txType === "Info" ? "Balance Check"
+                        : txType || "Transaction";
+
+            // Only add row if we have at least date or type information
+            if (formattedDate !== "-" || typeDisplay !== "Transaction") {
+              table += `<tr>
+            <td>${escapeHtml(formattedDate)}</td>
+            <td>${escapeHtml(accountName)}</td>
+            <td><span class="${typeClass}">${escapeHtml(typeDisplay)}</span></td>
+            <td>${escapeHtml(String(amount))}</td>
+            <td>${escapeHtml(String(balance))}</td>
+          </tr>`;
+            }
+          }
+        });
+        table += `</tbody></table>`;
+        container.innerHTML = table;
+
+        // Show detail section with account number and name
+        const detailSection2 = document.getElementById("history_detail_section");
+        if (detailSection2) {
+          detailSection2.style.display = "block";
+          detailSection2.innerHTML = `
+        <div style="background:#ffffff;border-radius:10px;padding:16px;max-width:600px;margin:0 auto;text-align:left;box-shadow:0 4px 10px rgba(0,0,0,0.05);">
+          <h3 style="margin-top:0;color:#0097a7;">Account Details</h3>
+          <p style="margin:4px 0;"><strong>Account Number:</strong> ${escapeHtml(acc)}</p>
+          <p style="margin:4px 0;"><strong>Account Holder Name:</strong> ${escapeHtml(accountName || "")}</p>
+        </div>`;
+        }
+
+        container.scrollIntoView({ behavior: "smooth" });
+
+        // Display detail section with reset password and face capture options
+        const detailSection = document.getElementById("history_detail_section");
+        if (detailSection) {
+          let detailHTML = `<div class="card" style="max-width: 700px; margin: 20px auto;">
+        <h3 style="color: #0097a7; margin-bottom: 20px; text-align: center;">⚙️ Account Management</h3>
+        <div style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+          <h4 style="color: #006064; margin-top: 0; margin-bottom: 15px;">🔐 Security Options</h4>
+          <p style="color: #006064; font-size: 14px; line-height: 1.6; margin: 10px 0;">
+            Manage your account security settings. You can reset your password or update your face capture for enhanced security.
+          </p>
+          <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
+            <button class="action" id="reset-password-btn" data-acc="${escapeHtml(acc)}" data-pass="${escapeHtml(pass)}" style="width: auto; min-width: 180px;">
+              🔑 Reset Password
+            </button>
+            <button class="action" id="capture-face-btn" data-acc="${escapeHtml(acc)}" data-pass="${escapeHtml(pass)}" style="width: auto; min-width: 180px;">
+              📷 Update Face Capture
+            </button>
+          </div>
+        </div>
+      </div>`;
+          detailSection.innerHTML = detailHTML;
+          detailSection.style.display = "block";
+
+          // Attach event listeners
+          const resetBtn = detailSection.querySelector("#reset-password-btn");
+          const captureBtn = detailSection.querySelector("#capture-face-btn");
+
+          if (resetBtn) {
+            resetBtn.addEventListener("click", function () {
+              const accNo = this.getAttribute("data-acc");
+              const password = this.getAttribute("data-pass");
+              resetPasswordFromHistory(accNo, password);
+            });
+          }
+
+          if (captureBtn) {
+            captureBtn.addEventListener("click", function () {
+              const accNo = this.getAttribute("data-acc");
+              const password = this.getAttribute("data-pass");
+              captureFaceFromHistory(accNo, password);
+            });
+          }
+        }
+
+        if (typeof confetti === "function") {
+          confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+        }
+      } catch (err) {
+        console.error("Error fetching history:", err);
+        showMessage("history_result", "An error occurred while loading history.");
+        speak("An error occurred while loading history.");
+        const detailSection = document.getElementById("history_detail_section");
+        if (detailSection) {
+          detailSection.style.display = "none";
+        }
+      }
+    }
+
+    async function getAccountDetails() {
+      const name = document.getElementById("details_name").value.trim();
+      const pass = document.getElementById("details_pass").value.trim();
+      const resultBox = document.getElementById("response_details");
+      const detailsSection = document.getElementById("details_section");
+
+      if (!name || !pass) {
+        showMessage("response_details", "Please enter both name and password.");
+        return;
+      }
+
+      showMessage("response_details", "Verifying credentials and capturing face image...");
+      detailsSection.style.display = "none";
+      detailsSection.innerHTML = "";
+
+      try {
+        const res = await fetch('/account_details', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name, password: pass })
+        });
+
+        if (!res.ok) {
+          const txt = await res.text();
+          showMessage("response_details", "Failed to fetch account details.");
+          console.error("Account details fetch failed:", res.status, txt);
+          speak("Failed to fetch account details.");
+          return;
+        }
+
+        const data = await res.json();
+
+        if (data.error || data.success === false) {
+          const msg = data.message || data.error || "Invalid credentials or face verification failed.";
+          showMessage("response_details", msg);
+          speak(msg);
+
+          if (msg.includes("Face not recognized")) {
+            document.getElementById("retry_details").style.display = "inline-block";
+          } else {
+            document.getElementById("retry_details").style.display = "none";
+          }
+          detailsSection.style.display = "none";
+          return;
+        }
+
+        // Display success message
+        showMessage("response_details", "Account details retrieved successfully!");
+        speak("Account details retrieved successfully.");
+
+        // Hide retry button on success
+        document.getElementById("retry_details").style.display = "none";
+
+        // Build the account details display
+        let detailsHTML = `<div class="card" style="max-width: 700px; margin: 20px auto;">
+      <h3 style="color: #0097a7; margin-bottom: 20px; text-align: center;">📋 Complete Account Information</h3>`;
+
+        // Account Information Section
+        detailsHTML += `<div style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+      <h4 style="color: #006064; margin-top: 0; margin-bottom: 15px;">👤 Account Information</h4>`;
+
+        if (data.account_number) {
+          detailsHTML += `<p style="margin: 10px 0; font-size: 16px;"><strong>Account Number:</strong> <span style="color: #00bcd4; font-size: 18px; font-weight: bold;">${escapeHtml(data.account_number)}</span></p>`;
+        }
+        if (data.name) {
+          detailsHTML += `<p style="margin: 10px 0; font-size: 16px;"><strong>Account Holder Name:</strong> ${escapeHtml(data.name)}</p>`;
+        }
+        if (data.age !== undefined) {
+          detailsHTML += `<p style="margin: 10px 0; font-size: 16px;"><strong>Age:</strong> ${escapeHtml(data.age)} years</p>`;
+        }
+        if (data.income !== undefined) {
+          detailsHTML += `<p style="margin: 10px 0; font-size: 16px;"><strong>Monthly Income:</strong> ₹${parseFloat(data.income).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>`;
+        }
+        if (data.account_type) {
+          detailsHTML += `<p style="margin: 10px 0; font-size: 16px;"><strong>Account Type:</strong> ${escapeHtml(data.account_type)}</p>`;
+        }
+        if (data.balance !== undefined && data.balance !== null) {
+          detailsHTML += `<p style="margin: 10px 0; font-size: 18px; font-weight: bold; color: #0097a7;"><strong>Current Balance:</strong> ₹${parseFloat(data.balance).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>`;
+        }
+        detailsHTML += `</div>`;
+
+        // Linked Transactions Section
+        const transactions = data.transactions || data.history || [];
+        if (transactions && transactions.length > 0) {
+          detailsHTML += `<div style="margin-top: 20px;">
+        <h4 style="color: #006064; margin-bottom: 15px;">💳 Linked Transactions (Recent ${Math.min(transactions.length, 10)})</h4>`;
+
+          // Filter valid transactions
+          const validTransactions = transactions.filter(tx => {
+            if (typeof tx === "string") return tx.trim().length > 0;
+            if (!tx || typeof tx !== "object") return false;
+            return (tx.date || tx.timestamp || tx.type || tx.amount !== undefined || tx.balance !== undefined);
+          }).slice(0, 10); // Show only recent 10 transactions
+
+          if (validTransactions.length > 0) {
+            detailsHTML += `<table class="history-table" style="width: 100%;">
+          <thead><tr><th>Date & Time</th><th>Type</th><th>Amount (₹)</th><th>Balance After (₹)</th></tr></thead><tbody>`;
+
+            validTransactions.forEach(tx => {
+              if (typeof tx === "string" && tx.trim().length > 0) {
+                detailsHTML += `<tr><td colspan="4" style="text-align: center; padding: 15px; color: #666;">${escapeHtml(tx)}</td></tr>`;
+              } else if (tx && typeof tx === "object") {
+                const rawDate = tx.date || tx.timestamp || "";
+                let formattedDate = "-";
+                if (rawDate) {
+                  try {
+                    formattedDate = new Date(rawDate).toLocaleString("en-IN", {
+                      day: "numeric", month: "short", year: "numeric",
+                      hour: "2-digit", minute: "2-digit", second: "2-digit"
+                    });
+                  } catch (e) {
+                    formattedDate = rawDate;
+                  }
+                }
+
+                let txType = tx.type || "";
+                if (!txType || txType === "-" || txType === "") {
+                  const desc = (tx.description || tx.transaction_type || "").toLowerCase();
+                  if (desc.includes("deposit") || desc.includes("credit")) txType = "Credit";
+                  else if (desc.includes("withdraw") || desc.includes("withdrawal") || desc.includes("debit")) txType = "Debit";
+                  else if (desc.includes("balance") || desc.includes("check")) txType = "Balance Check";
+                  else txType = "Transaction";
+                }
+
+                let amount = "-";
+                if (txType === "Balance Check" || txType === "Info") {
+                  amount = "-";
+                } else if (tx.amount !== undefined && tx.amount !== null && tx.amount !== "") {
+                  amount = `₹${parseFloat(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                }
+
+                let balance = "-";
+                if (tx.balance !== undefined && tx.balance !== null && tx.balance !== "") {
+                  balance = `₹${parseFloat(tx.balance).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                }
+
+                const typeClass = txType.toLowerCase().includes("credit") || txType.toLowerCase().includes("deposit") ? "badge-deposit"
+                  : txType.toLowerCase().includes("debit") || txType.toLowerCase().includes("withdraw") ? "badge-withdraw"
+                    : "badge-neutral";
+
+                const typeDisplay = txType === "Credit" ? "Credit"
+                  : txType === "Debit" ? "Debit"
+                    : txType === "Balance Check" ? "Balance Check"
+                      : txType === "Info" ? "Balance Check"
+                        : txType || "Transaction";
+
+                if (formattedDate !== "-" || typeDisplay !== "Transaction") {
+                  detailsHTML += `<tr>
+                <td>${escapeHtml(formattedDate)}</td>
+                <td><span class="${typeClass}">${escapeHtml(typeDisplay)}</span></td>
+                <td>${escapeHtml(String(amount))}</td>
+                <td>${escapeHtml(String(balance))}</td>
+              </tr>`;
+                }
+              }
+            });
+
+            detailsHTML += `</tbody></table>`;
+          } else {
+            detailsHTML += `<p style="text-align: center; color: #666; padding: 20px;">No transactions found.</p>`;
+          }
+          detailsHTML += `</div>`;
+        } else {
+          detailsHTML += `<div style="margin-top: 20px;">
+        <h4 style="color: #006064; margin-bottom: 15px;">💳 Linked Transactions</h4>
+        <p style="text-align: center; color: #666; padding: 20px;">No transactions found for this account.</p>
+      </div>`;
+        }
+
+        detailsHTML += `</div>`;
+        detailsSection.innerHTML = detailsHTML;
+        detailsSection.style.display = "block";
+        detailsSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+        if (typeof confetti === "function") {
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.5 } });
+        }
+
+      } catch (err) {
+        console.error("Error fetching account details:", err);
+        showMessage("response_details", "An error occurred while fetching account details.");
+        speak("An error occurred while fetching account details.");
+        detailsSection.style.display = "none";
+      }
+    }
+
+    function escapeHtml(unsafe) {
+      return String(unsafe)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    async function resetPasswordFromHistory(accNo, oldPass) {
+      const newPassword = prompt("Enter your new password:");
+      if (!newPassword || newPassword.trim() === "") {
+        showMessage("history_result", "Password reset cancelled.");
+        return;
+      }
+
+      const confirmPassword = prompt("Confirm your new password:");
+      if (newPassword !== confirmPassword) {
+        showMessage("history_result", "Passwords do not match. Password reset failed.");
+        speak("Passwords do not match. Password reset failed.");
+        return;
+      }
+
+      showMessage("history_result", "Resetting password...");
+
+      try {
+        const res = await fetch('/reset_password', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            account_number: accNo,
+            old_password: oldPass,
+            new_password: newPassword
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.success || data.status === "success") {
+          showMessage("history_result", data.message || "✅ Password reset successfully!");
+          speak("Password reset successfully.");
+          // Update the password field
+          document.getElementById("history-pass").value = newPassword;
+
+          if (typeof confetti === "function") {
+            confetti({ particleCount: 50, spread: 50, origin: { y: 0.6 } });
+          }
+        } else {
+          showMessage("history_result", data.message || "❌ Password reset failed. Please try again.");
+          speak("Password reset failed.");
+        }
+      } catch (err) {
+        console.error("Error resetting password:", err);
+        showMessage("history_result", "An error occurred while resetting password.");
+        speak("An error occurred while resetting password.");
+      }
+    }
+
+    async function captureFaceFromHistory(accNo, password) {
+      showMessage("history_result", "Preparing face capture...");
+      speak("Preparing face capture. Please grant camera permission.");
+
+      try {
+        const res = await fetch('/update_face_capture', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            account_number: accNo,
+            password: password
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.success || data.status === "success") {
+          showMessage("history_result", data.message || "✅ Face capture updated successfully!");
+          speak("Face capture updated successfully.");
+
+          if (typeof confetti === "function") {
+            confetti({ particleCount: 50, spread: 50, origin: { y: 0.6 } });
+          }
+        } else {
+          showMessage("history_result", data.message || "❌ Face capture failed. Please try again.");
+          speak("Face capture failed.");
+        }
+      } catch (err) {
+        console.error("Error capturing face:", err);
+        showMessage("history_result", "An error occurred while capturing face. Please check your camera and try again.");
+        speak("An error occurred while capturing face.");
+      }
+    }
+
+    async function submit(action, responseId) {
+      if (action === "open_account") {
+        const name = document.getElementById("open_name").value.trim();
+        const age = parseInt(document.getElementById("open_age").value);
+        const location = document.getElementById("open_location").value.trim();
+        const income = parseFloat(document.getElementById("open_income").value);
+        const accountType = document.getElementById("open_account_type").value;
+        const password = document.getElementById("open_pass").value;
+
+        if (!name || !age || !location || !income || !accountType || !password) {
+          showMessage(responseId, "Please fill in all required fields.");
+          return;
+        }
+
+        if (age < 18) {
+          showMessage(responseId, "Sorry, you must be at least 18 years old to open an account.");
+          return;
+        }
+
+        // Submit directly to backend (age already validated in form)
+        const data = {
+          name: name,
+          age: age,
+          location: location,
+          income: income,
+          account_type: accountType,
+          pass: password,
+          amount: 0
+        };
+
+        try {
+          // Log: submitting account creation request
+          fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'index.html:submit',
+              message: 'Submitting account creation request',
+              data: { name: data.name, age: data.age, income: data.income, account_type: data.account_type },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'B'
+            })
+          }).catch(() => ({}));
+
+          const res = await fetch('/open_account', {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+          });
+
+          // Log: account creation response received
+          fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'index.html:submit',
+              message: 'Account creation response received',
+              data: { status: res.status, statusText: res.statusText },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'B'
+            })
+          }).catch(() => ({}));
+
+          const json = await res.json();
+
+          // Log: account creation result
+          fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'index.html:submit',
+              message: 'Account creation result',
+              data: { status: json.status, message: json.message, accountNumber: json.account_number },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'B'
+            })
+          }).catch(() => ({}));
+
+          // Display success message with account details
+          let successMessage = json.message || "Account opened successfully.";
+          if (json.account_number) {
+            successMessage += "<br><br><strong style='font-size: 16px; color: #0097a7;'>Account Details:</strong><br>";
+            successMessage += `<div style='margin-top: 10px; padding: 10px; background: white; border-radius: 5px;'>`;
+            successMessage += `Account Number: <strong style='color: #00bcd4; font-size: 18px;'>${json.account_number}</strong><br>`;
+            successMessage += `Name: ${json.name || data.name}<br>`;
+            successMessage += `Age: ${json.age || data.age} years<br>`;
+            successMessage += `Income: ₹${json.income || data.income}<br>`;
+            successMessage += `Account Type: ${json.account_type || data.account_type}`;
+            successMessage += `</div>`;
+          }
+          const responseEl = document.getElementById(responseId);
+          if (responseEl) {
+            responseEl.innerHTML = successMessage;
+            responseEl.className = 'response success';
+            responseEl.style.display = 'block';
+            // Auto-hide after 15 seconds (longer for account details)
+            if (messageTimeouts[responseId]) {
+              clearTimeout(messageTimeouts[responseId]);
+            }
+            messageTimeouts[responseId] = setTimeout(() => {
+              responseEl.innerHTML = '';
+              responseEl.style.display = 'none';
+              delete messageTimeouts[responseId];
+            }, 15000);
+          }
+          if (json.message) speak(json.message);
+
+          // Clear form fields after successful submission
+          document.getElementById("open_name").value = '';
+          document.getElementById("open_age").value = '';
+          document.getElementById("open_location").value = '';
+          document.getElementById("open_income").value = '';
+          document.getElementById("open_account_type").value = '';
+          document.getElementById("open_pass").value = '';
+        } catch (error) {
+          console.error("Error:", error);
+          showMessage(responseId, "An error occurred while processing your request. Please check your camera and try again.");
+        }
+        return;
+      }
+      let data = {};
+      if (action === "deposit") {
+        data = {
+          name: document.getElementById("dep_name").value,
+          acc_no: document.getElementById("dep_acc").value,
+          pass: document.getElementById("dep_pass").value,
+          amount: parseFloat(document.getElementById("dep_amt").value)
+        };
+      } else if (action === "withdraw") {
+        data = {
+          name: document.getElementById("with_name").value,
+          acc_no: document.getElementById("with_acc").value,
+          pass: document.getElementById("with_pass").value,
+          amount: parseFloat(document.getElementById("with_amt").value)
+        };
+      } else if (action === "check_balance") {
+        data = {
+          acc_no: document.getElementById("check_acc").value,
+          pass: document.getElementById("check_pass").value
+        };
+      } else if (action === "close_account") {
+        data = {
+          name: document.getElementById("close_name").value,
+          acc_no: document.getElementById("close_acc").value,
+          pass: document.getElementById("close_pass").value
+        };
+      }
+
+      for (let key in data) {
+        if (data[key] === "" || data[key] === undefined || Number.isNaN(data[key])) {
+          showMessage(responseId, "Please fill in all required fields.");
+          return;
+        }
+      }
+      try {
+        const res = await fetch(`/${action}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+
+        const json = await res.json();
+        const message = json.message || (json.balance !== undefined ? `Balance: ₹${json.balance}` : JSON.stringify(json));
+        showMessage(responseId, message);
+        if (json.message) speak(json.message);
+
+        if (json.message && json.message.includes("Face not recognized")) {
+          if (action === "deposit") {
+            document.getElementById("retry_deposit").style.display = "inline-block";
+          } else if (action === "withdraw") {
+            document.getElementById("retry_withdraw").style.display = "inline-block";
+          }
+        } else {
+          document.getElementById("retry_deposit").style.display = "none";
+          document.getElementById("retry_withdraw").style.display = "none";
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        showMessage(responseId, "An error occurred while processing your request.");
+      }
+    }
+    async function openPassbook() {
+      const acc = document.getElementById("passbook_acc").value.trim();
+      const pass = document.getElementById("passbook_pass").value.trim();
+
+      if (!acc || !pass) {
+        showMessage("response_passbook", "Please enter both Account Number and Password.");
+        return;
+      }
+
+      showMessage("response_passbook", "⏳ Verifying credentials... Camera window will open shortly. Minimize your browser to see it.");
+
+      try {
+        const res = await fetch("/passbook_data", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ account_number: acc, password: pass })
+        });
+
+        const data = await res.json();
+
+        if (data.status === "banned") {
+          showSection("failure_page");
+          document.getElementById("failure_msg").textContent = data.message;
+          document.getElementById("failure_submsg").textContent = "Your account has been closed for security reasons.";
+          document.getElementById("appeal_link").style.display = "block";
+          return;
+        }
+
+        if (!data.success) {
+          showMessage("response_passbook", "❌ " + (data.message || "Verification failed. Please try again."));
+          return;
+        }
+
+        // Success — show the passbook
+        const details = data.account_details;
+        const history = details.history || [];
+        let historyRows = history.length
+          ? history.map(t => `<tr>
+              <td>${t.date || "-"}</td>
+              <td>${t.type || "-"}</td>
+              <td>${t.amount != null ? "₹" + t.amount : "-"}</td>
+              <td>₹${t.balance != null ? t.balance : "-"}</td>
+            </tr>`).join("")
+          : `<tr><td colspan="4" style="text-align:center;">No transactions yet.</td></tr>`;
+
+        document.getElementById("passbook_form").style.display = "none";
+        document.getElementById("passbook_content").style.display = "block";
+        document.getElementById("passbook_content").innerHTML = `
+          <div style="background:linear-gradient(135deg,#e0f7fa,#b2ebf2);border:2px solid #00bcd4;border-radius:12px;padding:20px;max-width:700px;margin:auto;">
+            <h3 style="color:#006064">📋 Passbook — ${details.name}</h3>
+            <p><strong>Account Type:</strong> ${details.account_type}</p>
+            <p><strong>Age:</strong> ${details.age}</p>
+            <p><strong>Income:</strong> ₹${details.income}</p>
+            <p><strong>Current Balance:</strong> ₹${details.balance}</p>
+            <hr/>
+            <h4>Transaction History</h4>
+            <table style="width:100%;border-collapse:collapse;font-size:14px;">
+              <thead><tr style="background:#00bcd4;color:white;">
+                <th style="padding:8px;text-align:left">Date</th>
+                <th style="padding:8px;text-align:left">Type</th>
+                <th style="padding:8px;text-align:left">Amount</th>
+                <th style="padding:8px;text-align:left">Balance</th>
+              </tr></thead>
+              <tbody>${historyRows}</tbody>
+            </table>
+            <button class="action" style="margin-top:20px" onclick="document.getElementById('passbook_form').style.display='block';document.getElementById('passbook_content').style.display='none';">🔙 Back</button>
+          </div>`;
+      } catch (err) {
+        showMessage("response_passbook", "❌ Error connecting to server. Please try again.");
+        console.error(err);
+      }
+    }
+
+    function sendMessage() {
+
+      const input = document.getElementById("chatInput");
+      const chatBox = document.getElementById("chatMessages");
+      const text = input.value.trim();
+      if (!text) return;
+
+      const userMsg = document.createElement("div");
+      userMsg.className = "chat-message user";
+      userMsg.textContent = text;
+      chatBox.appendChild(userMsg);
+      input.value = "";
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      setTimeout(() => {
+        const botMsg = document.createElement("div");
+        botMsg.className = "chat-message bot";
+        let reply = "I'm not sure I understand. Could you please clarify?";
+        const t = text.toLowerCase();
+        if (t.includes("hello") || t.includes("hi")) reply = "Hi there! How can I help you today?";
+        else if (t.includes("good morning")) reply = "Good morning! How can I help you today?";
+        else if (t.includes("account")) reply = "You can open or manage your account using the tabs above. Which action would you like to do?";
+        else if (t.includes("balance")) reply = "To check your balance, please go to 'Check Balance' and submit your account number.";
+        else if (t.includes("scheme") || t.includes("loan")) reply = "Please check our 'Schemes' and 'Loans' sections for detailed information about our products.";
+        else if (t.includes("problem") || t.includes("issue")) reply = "Sorry to hear that! Please describe your problem in detail and we'll assist.";
+        else if (t.includes("contact") || t.includes("support")) reply = "You can reach us at support@SmartBank3D.com or call 1800-123-456.";
+        else if (t.includes("thank")) reply = "Welcome. Glad to help you out!";
+        else if (t.includes("history")) {
+          reply = "To view transaction history, go to History and click 'View History'.";
+        }
+        botMsg.textContent = reply;
+        chatBox.appendChild(botMsg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }, 600);
+    }
+
+    document.getElementById("chatInput")?.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendMessage();
+    });
+
+    document.getElementById("aiChatInput")?.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") aiSendMessage();
+    });
+
+    window.onload = () => {
+      showSection('home');
+      const welcomeMsg = new SpeechSynthesisUtterance("Welcome to Skiller SmartBank. Your secure and expressive banking experience starts now.");
+      welcomeMsg.lang = "en-IN";
+      welcomeMsg.rate = 1;
+      welcomeMsg.onend = () => {
+        speak("Tech bhi smart, Paise bhi safe!");
+        isInitialLoad = false; // Mark initial load as complete
+      };
+      window.speechSynthesis.speak(welcomeMsg);
+
+      setTimeout(() => {
+        const container = document.getElementById('logoContainer');
+        const img = document.getElementById('logoImage');
+        const containerStyles = container ? window.getComputedStyle(container) : null;
+        const imgStyles = img ? window.getComputedStyle(img) : null;
+
+        fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'index.html:window.onload', message: 'Logo container check', data: { containerExists: !!container, imgExists: !!img, containerDisplay: containerStyles?.display, containerWidth: containerStyles?.width, imgWidth: imgStyles?.width, imgHeight: imgStyles?.height, containerBackground: containerStyles?.background, containerBoxShadow: containerStyles?.boxShadow }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' }) }).catch(() => { });
+
+        if (container) {
+          const computedStyle = window.getComputedStyle(container);
+          fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'index.html:window.onload', message: 'Container dimensions and styles', data: { offsetWidth: container.offsetWidth, offsetHeight: container.offsetHeight, clientWidth: container.clientWidth, clientHeight: container.clientHeight, borderRadius: computedStyle.borderRadius, background: computedStyle.background, boxShadow: computedStyle.boxShadow, display: computedStyle.display }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' }) }).catch(() => { });
+        }
+        if (img) {
+          fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'index.html:window.onload', message: 'Image dimensions', data: { offsetWidth: img.offsetWidth, offsetHeight: img.offsetHeight, naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight, complete: img.complete }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) }).catch(() => { });
+        }
+      }, 1000);
+    };
+  </script>
+</body>
+
+</html>

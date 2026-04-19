@@ -1,0 +1,66 @@
+# Virtual environments
+.venv/
+venv/
+venv39/
+venv310/
+env/
+env10/
+env10_real/
+env310/
+env310_clean/
+env310_real/
+new_env/
+myenv/
+mp_env/
+mp_env310/
+mp_env311/
+mp_env312/
+mp_env37/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE / Editor
+.cursor/
+.vscode/
+.aider*
+*.code-workspace
+tempCodeRunnerFile.py
+
+# Logs
+*.log
+out.log
+error.log
+ngrok.log
+
+# Large data files
+*.pkl
+*.csv
+*.db
+*.zip
+*.whl
+*.wav
+*.obj
+similarity.pkl
+movie_list.pkl
+archive.zip
+
+# Sensitive
+.env
+
+# Build artifacts
+build/
+dist/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Face images (local only)
+faces/
+
+# Other large/unrelated files
+archive/
+*.pth

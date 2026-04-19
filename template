@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GestureTic Game</title>
+</head>
+<body>
+  <h2>Welcome, {{ player }}</h2>
+
+  <!-- Show photo or placeholder -->
+  <img src="{{ photo }}" alt="Player Photo" width="100" height="100" onerror="this.src='https://via.placeholder.com/100'"><br>
+
+  <p>Make your move using hand gestures or clicks!</p>
+
+  <!-- Game Grid -->
+  <table border="1">
+    <tr>
+      <td onclick="makeMove(this)">1</td>
+      <td onclick="makeMove(this)">2</td>
+      <td onclick="makeMove(this)">3</td>
+    </tr>
+    <tr>
+      <td onclick="makeMove(this)">4</td>
+      <td onclick="makeMove(this)">5</td>
+      <td onclick="makeMove(this)">6</td>
+    </tr>
+    <tr>
+      <td onclick="makeMove(this)">7</td>
+      <td onclick="makeMove(this)">8</td>
+      <td onclick="makeMove(this)">9</td>
+    </tr>
+  </table>
+
+  <br>
+  <button onclick="win()">I Won!</button>
+
+  <script>
+    let turn = 'X';
+    function makeMove(cell) {
+      if (cell.innerText === 'X' || cell.innerText === 'O') return;
+      cell.innerText = turn;
+      turn = (turn === 'X') ? 'O' : 'X';
+    }
+
+    function win() {
+      alert("🎉 You won! Score updated.");
+      fetch('/update_score', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({player: "{{ player }}"})
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skiller SmartBank — Secure Login</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --cyan: #00bcd4;
+      --cyan2: #0097a7;
+      --dark: #050d14;
+      --deep: #030912;
+      --card: rgba(5, 20, 35, 0.88);
+      --border: rgba(0, 188, 212, 0.22);
+      --text: #e4f4ff;
+      --muted: rgba(228, 244, 255, 0.5);
+      --gold: #f5c842;
+    }
+
+    html,
+    body {
+      height: 100%;
+      background: var(--deep);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* ── CANVAS ── */
+    #coinCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── BACKGROUND GLOW ── */
+    .bg-glow {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 80%, rgba(0, 188, 212, 0.09) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 60% at 80% 20%, rgba(0, 144, 170, 0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── FLOATING PARTICLES ── */
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 188, 212, 0.5), transparent);
+      animation: floatUp linear infinite;
+    }
+
+    @keyframes floatUp {
+      0% {
+        transform: translateY(100vh) scale(0);
+        opacity: 0;
+      }
+
+      10% {
+        opacity: 1;
+      }
+
+      90% {
+        opacity: 0.3;
+      }
+
+      100% {
+        transform: translateY(-10vh) scale(1);
+        opacity: 0;
+      }
+    }
+
+    /* ── SCENE ── */
+    .scene {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      perspective: 1200px;
+    }
+
+    /* ── CARD ── */
+    .card {
+      width: 440px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 48px 44px 40px;
+      backdrop-filter: blur(28px) saturate(160%);
+      box-shadow:
+        0 0 0 1px rgba(0, 188, 212, 0.08),
+        0 32px 80px rgba(0, 0, 0, 0.75),
+        0 0 60px rgba(0, 188, 212, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      transform-style: preserve-3d;
+      animation: cardFloat 6s ease-in-out infinite;
+      transition: transform 0.1s ease-out;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0, 188, 212, 0.7), transparent);
+      animation: shimmer 3s ease-in-out infinite;
+    }
+
+    .card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    @keyframes shimmer {
+
+      0%,
+      100% {
+        opacity: 0.4;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    @keyframes cardFloat {
+
+      0%,
+      100% {
+        transform: translateY(0px) rotateX(0deg);
+      }
+
+      50% {
+        transform: translateY(-8px) rotateX(1deg);
+      }
+    }
+
+    /* ── LOGO ── */
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+      animation: fadeDown 0.7s ease both;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--cyan), var(--cyan2));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 4px 20px rgba(0, 188, 212, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      transform: translateZ(20px);
+      color: white;
+      font-weight: 900;
+    }
+
+    .logo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff 30%, var(--cyan));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: -2px;
+    }
+
+    /* ── HEADING ── */
+    .heading {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      font-weight: 600;
+      line-height: 1.2;
+      margin-bottom: 6px;
+      animation: fadeDown 0.7s 0.1s ease both;
+    }
+
+    .subhead {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 28px;
+      animation: fadeDown 0.7s 0.15s ease both;
+    }
+
+    /* ── INPUTS ── */
+    .field {
+      margin-bottom: 16px;
+      animation: fadeDown 0.7s ease both;
+    }
+
+    .field:nth-child(1) {
+      animation-delay: 0.2s;
+    }
+
+    .field:nth-child(2) {
+      animation-delay: 0.25s;
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: rgba(0, 188, 212, 0.8);
+      margin-bottom: 7px;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-wrap .ico {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      opacity: 0.4;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .input-wrap:focus-within .ico {
+      opacity: 0.9;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="email"] {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 13px 14px 13px 42px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+    }
+
+    input[type="text"]::placeholder,
+    input[type="password"]::placeholder,
+    input[type="email"]::placeholder {
+      color: rgba(255, 255, 255, 0.2);
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    input[type="email"]:focus {
+      border-color: rgba(0, 188, 212, 0.55);
+      background: rgba(0, 188, 212, 0.04);
+      box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.1), 0 0 20px rgba(0, 188, 212, 0.05);
+    }
+
+    /* ── OPTIONS ROW ── */
+    .options {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      animation: fadeDown 0.7s 0.3s ease both;
+    }
+
+    .remember {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .remember input[type=checkbox] {
+      width: 15px;
+      height: 15px;
+      padding: 0;
+      accent-color: var(--cyan);
+      cursor: pointer;
+    }
+
+    .forgot {
+      font-size: 13px;
+      color: var(--cyan);
+      text-decoration: none;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+
+    .forgot:hover {
+      opacity: 1;
+    }
+
+    /* ── ATTEMPTS COUNTER ── */
+    .attempts-bar {
+      display: none;
+      margin-bottom: 16px;
+      animation: fadeDown 0.4s ease both;
+    }
+
+    .attempts-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .attempts-track {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .attempts-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.4s ease, background 0.4s ease;
+    }
+
+    /* ── ALERT MESSAGE ── */
+    .alert {
+      display: none;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 18px;
+      animation: fadeDown 0.4s ease both;
+      line-height: 1.5;
+    }
+
+    .alert.error {
+      background: rgba(255, 80, 80, 0.12);
+      border: 1px solid rgba(255, 80, 80, 0.35);
+      color: #ff8080;
+    }
+
+    .alert.success {
+      background: rgba(46, 204, 113, 0.1);
+      border: 1px solid rgba(46, 204, 113, 0.35);
+      color: #6be0a0;
+    }
+
+    .alert.warning {
+      background: rgba(245, 200, 66, 0.1);
+      border: 1px solid rgba(245, 200, 66, 0.35);
+      color: var(--gold);
+    }
+
+    .alert.locked {
+      background: rgba(180, 30, 30, 0.18);
+      border: 1px solid rgba(255, 60, 60, 0.4);
+      color: #ff6b6b;
+    }
+
+    /* ── SIGN IN BUTTON ── */
+    .btn-login {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--cyan), var(--cyan2));
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 6px 30px rgba(0, 188, 212, 0.4), 0 2px 8px rgba(0, 0, 0, 0.4);
+      transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+      animation: fadeDown 0.7s 0.35s ease both;
+    }
+
+    .btn-login::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+      transform: skewX(-20deg);
+      animation: btnShine 3s 2s ease-in-out infinite;
+    }
+
+    @keyframes btnShine {
+      0% {
+        left: -100%;
+      }
+
+      40%,
+      100% {
+        left: 160%;
+      }
+    }
+
+    .btn-login:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 40px rgba(0, 188, 212, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .btn-login:active:not(:disabled) {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .btn-login:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 22px 0;
+      animation: fadeDown 0.7s 0.4s ease both;
+    }
+
+    .divider span {
+      height: 1px;
+      flex: 1;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .divider p {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    /* ── SIGN UP BUTTON ── */
+    .btn-signup {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid rgba(0, 188, 212, 0.35);
+      border-radius: 14px;
+      background: transparent;
+      color: var(--cyan);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+      animation: fadeDown 0.7s 0.45s ease both;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-signup::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(0, 188, 212, 0.09), rgba(0, 188, 212, 0.02));
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .btn-signup:hover {
+      border-color: rgba(0, 188, 212, 0.8);
+      box-shadow: 0 0 20px rgba(0, 188, 212, 0.14), inset 0 0 20px rgba(0, 188, 212, 0.04);
+      transform: translateY(-1px);
+    }
+
+    .btn-signup:hover::before {
+      opacity: 1;
+    }
+
+    /* ── FOOTER ── */
+    .card-footer {
+      text-align: center;
+      margin-top: 22px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.2);
+      letter-spacing: 0.5px;
+      animation: fadeDown 0.7s 0.5s ease both;
+    }
+
+    .card-footer span {
+      color: rgba(0, 188, 212, 0.45);
+    }
+
+    /* ── SECURE BADGE ── */
+    .secure-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 10px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.22);
+      animation: fadeDown 0.7s 0.55s ease both;
+    }
+
+    .secure-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #2ecc71;
+      box-shadow: 0 0 6px #2ecc71;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 4px #2ecc71;
+        opacity: 1;
+      }
+
+      50% {
+        box-shadow: 0 0 10px #2ecc71;
+        opacity: 0.7;
+      }
+    }
+
+    /* ── FADE DOWN ── */
+    @keyframes fadeDown {
+      from {
+        opacity: 0;
+        transform: translateY(-16px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ── SPINNER ── */
+    .spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ── MODAL OVERLAY (Signup) ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 10;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: rgba(6, 22, 40, 0.96);
+      border: 1px solid rgba(0, 188, 212, 0.3);
+      border-radius: 22px;
+      padding: 44px 40px 36px;
+      width: 400px;
+      position: relative;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 188, 212, 0.08);
+      animation: popIn 0.4s cubic-bezier(.175, .885, .32, 1.275) both;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: scale(0.88) translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--muted);
+      line-height: 1;
+      transition: color 0.2s, transform 0.2s;
+    }
+
+    .modal-close:hover {
+      color: var(--cyan);
+      transform: rotate(90deg);
+    }
+
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .modal-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 26px;
+    }
+
+    .modal-box .field {
+      margin-bottom: 14px;
+    }
+
+    .btn-create {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 13px;
+      background: linear-gradient(135deg, var(--cyan), var(--cyan2));
+      color: white;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 6px;
+      box-shadow: 0 6px 24px rgba(0, 188, 212, 0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-create:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 36px rgba(0, 188, 212, 0.5);
+    }
+
+    .signup-alert {
+      display: none;
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: 14px;
+      animation: fadeDown 0.3s ease both;
+    }
+
+    .signup-alert.error {
+      background: rgba(255, 80, 80, 0.12);
+      border: 1px solid rgba(255, 80, 80, 0.35);
+      color: #ff8080;
+    }
+
+    .signup-alert.success {
+      background: rgba(46, 204, 113, 0.1);
+      border: 1px solid rgba(46, 204, 113, 0.35);
+      color: #6be0a0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <canvas id="coinCanvas"></canvas>
+  <div class="bg-glow"></div>
+  <div class="particles" id="particles"></div>
+
+  <div class="scene">
+    <div class="card" id="card">
+
+      <!-- Logo -->
+      <div class="logo-wrap">
+        <div class="logo-icon">🏛</div>
+        <div>
+          <div class="logo-text">Skiller SmartBank</div>
+          <div class="logo-sub">Virtual Banking</div>
+        </div>
+      </div>
+
+      <div class="heading">Welcome back</div>
+      <div class="subhead">Sign in with your account number &amp; password</div>
+
+      <!-- Alert Message -->
+      <div class="alert" id="loginAlert"></div>
+
+      <!-- Attempts Bar -->
+      <div class="attempts-bar" id="attemptsBar">
+        <div class="attempts-label">
+          <span id="attemptsText">Login attempts remaining</span>
+          <span id="attemptsCount"></span>
+        </div>
+        <div class="attempts-track">
+          <div class="attempts-fill" id="attemptsFill"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="accNum">Account Number</label>
+        <div class="input-wrap">
+          <input type="text" id="accNum" placeholder="e.g. 1111 or 123456789" autocomplete="username" />
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="16" rx="3" />
+            <path d="M7 9h10M7 13h6" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="accPass">Password</label>
+        <div class="input-wrap">
+          <input type="password" id="accPass" placeholder="••••••••" autocomplete="current-password" />
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="options">
+        <label class="remember">
+          <input type="checkbox" id="rememberMe" /> Remember me
+        </label>
+        <a href="#" class="forgot" onclick="return false;">Forgot password?</a>
+      </div>
+
+      <button class="btn-login" id="loginBtn" onclick="handleLogin()">
+        <span id="loginBtnText">Sign In Securely</span>
+        <div class="spinner" id="loginSpinner"></div>
+      </button>
+
+      <div class="divider">
+        <span></span>
+        <p>OR</p><span></span>
+      </div>
+
+      <button class="btn-signup" onclick="openSignup()">Create New Account</button>
+
+      <div class="card-footer">
+        Protected by <span>256-bit SSL encryption</span>
+      </div>
+      <div class="secure-badge">
+        <div class="secure-dot"></div>
+        Secure Connection Established
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Signup Modal -->
+  <div class="modal-overlay" id="signupModal">
+    <div class="modal-box">
+      <span class="modal-close" onclick="closeSignup()">✕</span>
+      <div class="modal-title">Create Account</div>
+      <div class="modal-sub">Open your Skiller SmartBank account</div>
+
+      <div class="field">
+        <label for="su_name">Full Name</label>
+        <div class="input-wrap">
+          <input type="text" id="su_name" placeholder="Your full name" />
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="7" r="4" />
+            <path d="M5.5 21a8.5 8.5 0 0 1 13 0" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="su_pass">Password</label>
+        <div class="input-wrap">
+          <input type="password" id="su_pass" placeholder="Choose a password" />
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="su_pass2">Confirm Password</label>
+        <div class="input-wrap">
+          <input type="password" id="su_pass2" placeholder="Repeat your password" />
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 12l2 2 4-4" />
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+          </svg>
+        </div>
+      </div>
+
+      <button class="btn-create" onclick="handleSignup()">Open Account</button>
+      <div class="signup-alert" id="signupAlert"></div>
+    </div>
+  </div>
+
+  <script>
+    // ─────────────────────────────────────────────
+    //  ACCOUNTS — loaded from accounts.json via fetch
+    //  Falls back gracefully if file not found
+    // ─────────────────────────────────────────────
+    const MAX_ATTEMPTS = 5;
+    let accountsDB = {};
+
+    // loginAttempts: { [accNum]: count }
+    const loginAttempts = (() => {
+      try { return JSON.parse(sessionStorage.getItem('lAttempts') || '{}'); }
+      catch { return {}; }
+    })();
+
+    function saveAttempts() {
+      sessionStorage.setItem('lAttempts', JSON.stringify(loginAttempts));
+    }
+
+    // Load accounts
+    fetch('accounts.json')
+      .then(r => r.json())
+      .then(data => { accountsDB = data; })
+      .catch(() => {
+        // fallback demo data so the page isn't broken without a server
+        accountsDB = {
+          "1111": { name: "dhiresh", pass: "1111" },
+          "200": { name: "Skiller", pass: "1729" },
+          "123": { name: "jjj", pass: "123" }
+        };
+      });
+
+    // ─────────────────────────────────────────────
+    //  HELPERS
+    // ─────────────────────────────────────────────
+    function showAlert(id, type, msg) {
+      const el = document.getElementById(id);
+      el.className = `alert ${type}`;
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function hideAlert(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+
+    function updateAttemptsUI(acc) {
+      const used = loginAttempts[acc] || 0;
+      const remaining = MAX_ATTEMPTS - used;
+      const bar = document.getElementById('attemptsBar');
+      const fill = document.getElementById('attemptsFill');
+      const count = document.getElementById('attemptsCount');
+      const txt = document.getElementById('attemptsText');
+
+      if (used === 0) { bar.style.display = 'none'; return; }
+
+      bar.style.display = 'block';
+      const pct = (remaining / MAX_ATTEMPTS) * 100;
+      fill.style.width = pct + '%';
+
+      const color = remaining > 2 ? '#f5c842' : remaining > 1 ? '#ff9800' : '#ff4444';
+      fill.style.background = color;
+      count.textContent = remaining + ' / ' + MAX_ATTEMPTS;
+      txt.textContent = remaining === 1
+        ? '⚠️ Last attempt before account lock'
+        : 'Attempts remaining';
+    }
+
+    // ─────────────────────────────────────────────
+    //  LOGIN
+    // ─────────────────────────────────────────────
+    function handleLogin() {
+      const accNum = document.getElementById('accNum').value.trim();
+      const accPass = document.getElementById('accPass').value;
+      const btn = document.getElementById('loginBtn');
+      const txt = document.getElementById('loginBtnText');
+      const spinner = document.getElementById('loginSpinner');
+
+      hideAlert('loginAlert');
+
+      // Basic validation
+      if (!accNum || !accPass) {
+        showAlert('loginAlert', 'error', '⚠️  Please enter both account number and password.');
+        return;
+      }
+
+      // Lockout check BEFORE showing spinner
+      if ((loginAttempts[accNum] || 0) >= MAX_ATTEMPTS) {
+        showAlert('loginAlert', 'locked',
+          '🔒  This account has been locked after 5 failed attempts. Please contact support to unlock it.');
+        document.getElementById('loginBtn').disabled = true;
+        return;
+      }
+
+      // Show loading state
+      txt.style.display = 'none';
+      spinner.style.display = 'block';
+      btn.disabled = true;
+
+      // Simulate network delay (300ms) then validate
+      setTimeout(() => {
+        txt.style.display = 'block';
+        spinner.style.display = 'none';
+        btn.disabled = false;
+
+        const account = accountsDB[accNum];
+
+        if (account && account.pass === accPass) {
+          // ✅ SUCCESS
+          loginAttempts[accNum] = 0; // reset attempts on success
+          saveAttempts();
+          showAlert('loginAlert', 'success', '✅  Login successful! Redirecting to your bank dashboard…');
+
+          // Store logged-in user info for the bank home to use
+          sessionStorage.setItem('loggedInAcc', accNum);
+          sessionStorage.setItem('loggedInName', account.name || 'User');
+
+          // Log login to login.json via Flask backend
+          fetch('/log_login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: account.name || 'User',
+              login_time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+            })
+          }).catch(() => { }); // silently ignore if backend is offline
+
+          setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+
+        } else {
+          // ❌ FAIL
+          loginAttempts[accNum] = (loginAttempts[accNum] || 0) + 1;
+          saveAttempts();
+
+          const used = loginAttempts[accNum];
+          const remaining = MAX_ATTEMPTS - used;
+
+          updateAttemptsUI(accNum);
+
+          if (remaining <= 0) {
+            // Locked out
+            showAlert('loginAlert', 'locked',
+              '🔒  Account locked! You have used all 5 login attempts. Please contact support.');
+            btn.disabled = true;
+          } else {
+            // Still has attempts
+            const tip = remaining === 1
+              ? '🚨 Last try left! Account will be locked on the next failure.'
+              : `🔁 Incorrect details. Please retry — ${remaining} attempt${remaining > 1 ? 's' : ''} remaining.`;
+            showAlert('loginAlert', 'error', tip);
+          }
+        }
+      }, 300);
+    }
+
+    // Allow Enter key to submit
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !document.getElementById('signupModal').classList.contains('open')) {
+        handleLogin();
+      }
+    });
+
+    // ─────────────────────────────────────────────
+    //  SIGNUP MODAL
+    // ─────────────────────────────────────────────
+    function openSignup() {
+      document.getElementById('signupModal').classList.add('open');
+      document.getElementById('su_name').focus();
+      document.getElementById('signupAlert').style.display = 'none';
+      document.getElementById('su_name').value = '';
+      document.getElementById('su_pass').value = '';
+      document.getElementById('su_pass2').value = '';
+    }
+
+    function closeSignup() {
+      document.getElementById('signupModal').classList.remove('open');
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('signupModal').addEventListener('click', function (e) {
+      if (e.target === this) closeSignup();
+    });
+
+    function showSignupAlert(type, msg) {
+      const el = document.getElementById('signupAlert');
+      el.className = `signup-alert ${type}`;
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function handleSignup() {
+      const name = document.getElementById('su_name').value.trim();
+      const pass = document.getElementById('su_pass').value;
+      const pass2 = document.getElementById('su_pass2').value;
+
+      if (!name) { showSignupAlert('error', '⚠️  Please enter your full name.'); return; }
+      if (pass.length < 3) { showSignupAlert('error', '⚠️  Password must be at least 3 characters.'); return; }
+      if (pass !== pass2) { showSignupAlert('error', '❌  Passwords do not match.'); return; }
+
+      // Generate a random account number
+      const accNo = Math.floor(10000000 + Math.random() * 89999999).toString();
+
+      // Save to in-memory DB (note: without a backend, this won't persist to accounts.json)
+      accountsDB[accNo] = { name, pass, balance: 0.0, history: [] };
+
+      showSignupAlert('success',
+        `✅ Account created!\n\nAccount Number: ${accNo}\nPlease save this — you need it to log in.`);
+
+      // Auto-fill login fields for convenience
+      setTimeout(() => {
+        closeSignup();
+        document.getElementById('accNum').value = accNo;
+        document.getElementById('accPass').value = pass;
+        showAlert('loginAlert', 'success',
+          `🎉 Welcome, ${name}! Your account number is ${accNo}. It has been pre-filled below.`);
+      }, 3500);
+    }
+
+    // ─────────────────────────────────────────────
+    //  3D CARD TILT
+    // ─────────────────────────────────────────────
+    const card = document.getElementById('card');
+    const scene = document.querySelector('.scene');
+
+    scene.addEventListener('mousemove', e => {
+      const { left, top, width, height } = scene.getBoundingClientRect();
+      const x = (e.clientX - left) / width - 0.5;
+      const y = (e.clientY - top) / height - 0.5;
+      card.style.transform = `rotateY(${x * 14}deg) rotateX(${-y * 10}deg) translateZ(10px)`;
+      card.style.boxShadow = `
+    ${-x * 30}px ${y * 20}px 60px rgba(0,0,0,0.6),
+    0 0 60px rgba(0,188,212,0.07),
+    inset 0 1px 0 rgba(255,255,255,0.05)`;
+    });
+
+    scene.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+      card.style.boxShadow = '';
+    });
+
+    // ─────────────────────────────────────────────
+    //  COIN CANVAS
+    // ─────────────────────────────────────────────
+    const canvas = document.getElementById('coinCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    function rand(a, b) { return a + Math.random() * (b - a); }
+
+    class Coin {
+      constructor() { this.reset(true); }
+
+      reset(initial = false) {
+        this.x = rand(0, canvas.width);
+        this.y = initial ? rand(-canvas.height, 0) : rand(-160, -40);
+        this.radius = rand(12, 32);
+        this.speed = rand(1.0, 2.8);
+        this.wobble = rand(0, Math.PI * 2);
+        this.wobbleSpeed = rand(0.02, 0.05);
+        this.rotation = rand(0, Math.PI * 2);
+        this.rotSpeed = rand(-0.04, 0.04);
+        this.tilt = rand(0.15, 1.0);
+        this.tiltDir = Math.random() > 0.5 ? 1 : -1;
+        this.tiltSpeed = rand(0.015, 0.04);
+        this.opacity = rand(0.2, 0.6);
+        this.glint = 0;
+        this.glintDir = 1;
+        this.glintSpeed = rand(0.02, 0.05);
+        this.isRupee = Math.random() > 0.4;
+      }
+
+      update() {
+        this.y += this.speed;
+        this.x += Math.sin(this.wobble) * 0.55;
+        this.wobble += this.wobbleSpeed;
+        this.rotation += this.rotSpeed;
+        this.tilt += this.tiltDir * this.tiltSpeed;
+        if (this.tilt > 1 || this.tilt < 0.08) this.tiltDir *= -1;
+        this.glint += this.glintDir * this.glintSpeed;
+        if (this.glint > 1 || this.glint < 0) this.glintDir *= -1;
+        if (this.y - this.radius > canvas.height) this.reset();
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        ctx.globalAlpha = this.opacity;
+
+        const rx = this.radius * this.tilt;
+        const ry = this.radius;
+
+        const grd = ctx.createRadialGradient(-rx * 0.3, -ry * 0.3, 0, 0, 0, this.radius);
+        grd.addColorStop(0, '#b2f0f8');
+        grd.addColorStop(0.3, '#00bcd4');
+        grd.addColorStop(0.7, '#0097a7');
+        grd.addColorStop(1, '#005f6b');
+
+        ctx.beginPath();
+        ctx.ellipse(0, 0, Math.max(rx, 0.1), ry, 0, 0, Math.PI * 2);
+        ctx.fillStyle = grd;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.ellipse(0, 0, Math.max(rx, 0.1), ry, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(0,220,240,0.55)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.ellipse(0, 0, Math.max(rx * 0.78, 0.1), ry * 0.78, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        const gx = ctx.createRadialGradient(-rx * 0.2, -ry * 0.3, 0, -rx * 0.2, -ry * 0.3, rx * 0.5);
+        gx.addColorStop(0, `rgba(255,255,255,${this.glint * 0.65})`);
+        gx.addColorStop(1, 'transparent');
+        ctx.beginPath();
+        ctx.ellipse(-rx * 0.2, -ry * 0.3, Math.max(rx * 0.4, 0.1), ry * 0.35, 0, 0, Math.PI * 2);
+        ctx.fillStyle = gx;
+        ctx.fill();
+
+        if (rx > 5) {
+          ctx.fillStyle = 'rgba(0,40,50,0.8)';
+          ctx.font = `bold ${this.radius * 0.66 * this.tilt}px serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(this.isRupee ? '₹' : '$', 0, 0);
+        }
+
+        ctx.restore();
+      }
+    }
+
+    const coins = Array.from({ length: 26 }, () => new Coin());
+
+    (function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      coins.forEach(c => { c.update(); c.draw(); });
+      requestAnimationFrame(animate);
+    })();
+
+    // ─────────────────────────────────────────────
+    //  FLOATING PARTICLES
+    // ─────────────────────────────────────────────
+    const particlesEl = document.getElementById('particles');
+    for (let i = 0; i < 12; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = rand(4, 12);
+      Object.assign(p.style, {
+        width: size + 'px',
+        height: size + 'px',
+        left: rand(0, 100) + '%',
+        animationDuration: rand(8, 18) + 's',
+        animationDelay: rand(0, 10) + 's',
+        opacity: rand(0.1, 0.4)
+      });
+      particlesEl.appendChild(p);
+    }
+  </script>
+</body>
+
+</html>

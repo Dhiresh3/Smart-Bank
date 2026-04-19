@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🦾 Suit-Up Interface</title>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      background: radial-gradient(circle at center, #0f0f0f, #000000);
+      font-family: 'Orbitron', sans-serif;
+      color: #00ffe0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: 3em;
+      text-shadow: 0 0 20px #00ffe0;
+      animation: pulse 2s infinite;
+    }
+
+    .status {
+      margin-top: 20px;
+      font-size: 1.2em;
+      text-align: center;
+      animation: flicker 3s infinite;
+    }
+
+    model-viewer {
+      width: 400px;
+      height: 400px;
+      margin-top: 30px;
+      background-color: transparent;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      40% { opacity: 0.3; }
+      60% { opacity: 0.7; }
+    }
+  </style>
+</head>
+<body>
+  <h1>SUIT-UP SEQUENCE INITIATED</h1>
+  <div class="status">Deploying helmet and armor overlays...</div>
+
+  <!-- 🪖 Realistic 3D Helmet Viewer -->
+  <model-viewer src="/static/models/ironman_helmet.glb" alt="Iron Man Helmet"
+    auto-rotate camera-controls shadow-intensity="1" exposure="1.2" environment-image="neutral" ar>
+  </model-viewer>
+</body>
+</html>

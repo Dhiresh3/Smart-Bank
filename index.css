@@ -1,0 +1,583 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #e6f7ff, #b3e0ff);
+    margin: 0;
+    text-align: center;
+    overflow-x: hidden;
+    perspective: 1000px;
+    min-height: 100vh;
+}
+.form-group {
+    margin-bottom: 15px;
+    text-align: left;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+    font-weight: 500;
+}
+
+input:required, select:required {
+    border-left: 3px solid #ff6b6b;
+}
+
+input:valid, select:valid {
+    border-left: 3px solid #51cf66;
+}
+.navbar {
+    background: #00bcd4;
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(0, 188, 212, 0.4);
+    animation: slideDown 0.8s ease;
+}
+
+.navbar button {
+    background: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+.navbar button:hover {
+    background: #b2ebf2;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+}
+
+.navbar button::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(0, 188, 212, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.5s ease, height 0.5s ease;
+    z-index: 0;
+}
+
+.navbar button:hover::after {
+    width: 250%;
+    height: 250%;
+}
+.section {
+    display: none;
+    padding: 30px;
+    animation: fadeIn 0.6s ease-in;
+    transform-style: preserve-3d;
+}
+
+.active {
+    display: block;
+    animation: floatIn 0.8s ease forwards;
+}
+
+input, button.action, select {
+    margin: 10px;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    width: 80%;
+    transition: all 0.3s ease;
+}
+input:focus, select:focus {
+    outline: none;
+    box-shadow: 0 0 15px #00bcd4;
+    transform: scale(1.03);
+}
+
+button.action {
+    background: linear-gradient(135deg, #00bcd4, #0097a7);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 188, 212, 0.3);
+    border: none;
+}
+
+button.action:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 6px 15px rgba(0, 188, 212, 0.4);
+}
+.card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 500px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+}
+
+.card h3 {
+    color: #0097a7;
+    margin-top: 0;
+}
+
+.scheme-list, .loan-list {
+    text-align: left;
+    margin: 15px 0;
+    padding-left: 20px;
+}
+.scheme-list li, .loan-list li {
+    margin: 8px 0;
+    color: #555;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    animation: modalFadeIn 0.3s;
+}
+
+#ageConfirmModal .modal-content {
+    background: linear-gradient(135deg, #00bcd4, #00acc1);
+    color: black;
+    box-shadow: 0 8px 25px rgba(0, 188, 212, 0.4);
+}
+
+#ageConfirmModal .modal-content h3 {
+    color: black;
+    font-weight: bold;
+}
+
+#ageConfirmModal .modal-content p {
+    color: black;
+    font-weight: 500;
+}
+.close {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.response {
+    margin-top: 20px;
+    font-weight: bold;
+    color: red;
+    animation: fadeIn 0.6s ease-in;
+    text-align: left;
+    padding: 15px;
+    display: none;
+    background: #f0f9ff;
+    border-radius: 8px;
+    border-left: 4px solid #00bcd4;
+    line-height: 1.6;
+}
+.response.success {
+    color: green;
+    border-left-color: #51cf66;
+    background: #f0fdf4;
+}
+.chat-box {
+    background: #fff;
+    width: 90%;
+    max-width: 500px;
+    margin: 0 auto;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    height: 400px;
+    overflow: hidden;
+    animation: floatIn 0.8s ease;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    text-align: left;
+}
+.chat-message {
+    margin: 10px 0;
+    padding: 10px 15px;
+    border-radius: 15px;
+    display: inline-block;
+    animation: fadeIn 0.4s ease;
+    max-width: 80%;
+}
+
+.user {
+    background: #00bcd4;
+    color: white;
+    align-self: flex-end;
+    float: right;
+}
+
+.bot {
+    background: #e0f7fa;
+    color: #00796b;
+    float: left;
+}
+.chat-input {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    margin-right: 10px;
+}
+.chat-input button {
+    padding: 10px 15px;
+    border: none;
+    background: #00bcd4;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.ai-chat-box {
+    background: #fff;
+    width: 90%;
+    max-width: 600px;
+    margin: 20px auto;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    height: 380px;
+    overflow: hidden;
+}
+
+.ai-chat-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    text-align: left;
+    background: #f9fafb;
+}
+.ai-chat-message {
+    margin: 10px 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    max-width: 85%;
+    font-size: 14px;
+    line-height: 1.5;
+}
+.ai-chat-message.user {
+    background: #e3f2fd;
+    color: #0d47a1;
+    margin-left: auto;
+}
+.ai-chat-message.bot {
+    background: #ede7f6;
+    color: #311b92;
+    margin-right: auto;
+}
+.ai-chat-input {
+    display: flex;
+    border-top: 1px solid #ddd;
+    padding: 10px;
+    background: #fff;
+}
+.ai-chat-input input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    margin-right: 10px;
+}
+.ai-chat-input button {
+    padding: 10px 15px;
+    border-radius: 10px;
+    border: none;
+    background: #7c4dff;
+    color: white;
+    cursor: pointer;
+}
+
+.history-table {
+    width: 90%;
+    max-width: 800px;
+    margin: 20px auto;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.history-table th, .history-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+}
+.history-table th {
+    background: #00bcd4;
+    color: white;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+.history-table tr:nth-child(even) {
+    background: #f9f9f9;
+}
+.history-table tr:hover {
+    background: #e0f7fa;
+}
+.badge-deposit {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: #e8f5e9;
+    color: #2e7d32;
+    font-size: 11px;
+    font-weight: 600;
+}
+.badge-withdraw {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: #ffebee;
+    color: #c62828;
+    font-size: 11px;
+    font-weight: 600;
+}
+.badge-neutral {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: #e3f2fd;
+    color: #1565c0;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes floatIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) rotateX(-10deg);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) rotateX(0);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #e6f7ff, #b3e0ff);
+  margin: 0;
+  text-align: center;
+  overflow-x: hidden;
+  perspective: 1000px;
+  min-height: 100vh;
+}
+
+.form-group {
+  margin-bottom: 15px;
+  text-align: left;
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #333;
+  font-weight: 500;
+}
+
+input:required, select:required {
+  border-left: 3px solid #ff6b6b;
+}
+
+input:valid, select:valid {
+  border-left: 3px solid #51cf66;
+}
+
+.navbar {
+  background: #00bcd4;
+  padding: 15px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  box-shadow: 0 4px 15px rgba(0, 188, 212, 0.4);
+  animation: slideDown 0.8s ease;
+}
+
+.navbar button {
+  background: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.navbar button:hover {
+  background: #b2ebf2;
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+}
+
+.navbar button::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(0, 188, 212, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.5s ease, height 0.5s ease;
+  z-index: 0;
+}
+
+.navbar button:hover::after {
+  width: 250%;
+  height: 250%;
+}
+
+.section {
+  display: none;
+  padding: 30px;
+  animation: fadeIn 0.6s ease-in;
+  transform-style: preserve-3d;
+}
+
+.active {
+  display: block;
+  animation: floatIn 0.8s ease forwards;
+}
+
+input, button.action, select {
+  margin: 10px;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  width: 80%;
+  transition: all 0.3s ease;
+}
+
+input:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 15px #00bcd4;
+  transform: scale(1.03);
+}
+
+button.action {
+  background: linear-gradient(135deg, #00bcd4, #0097a7);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 188, 212, 0.3);
+  border: none;
+}
+
+button.action:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 15px rgba(0, 188, 212, 0.4);
+}
+
+/* 🔹 animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes floatIn {
+  from { opacity: 0; transform: translateY(30px) rotateX(-15deg) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) rotateX(0deg) scale(1); }
+}
+
+footer {
+  margin-top: 40px;
+  font-size: 14px;
+  color: #555;
+  animation: fadeUp 1s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}               
+

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GestureTic Game</title>
+</head>
+<body>
+  <h2>Welcome, {{ player }}</h2>
+  <p>Make your move using hand gestures!</p>
+
+  <table border="1">
+    <tr>
+      <td id="cell1">1</td>
+      <td id="cell2">2</td>
+      <td id="cell3">3</td>
+    </tr>
+    <tr>
+      <td id="cell4">4</td>
+      <td id="cell5">5</td>
+      <td id="cell6">6</td>
+    </tr>
+    <tr>
+      <td id="cell7">7</td>
+      <td id="cell8">8</td>
+      <td id="cell9">9</td>
+    </tr>
+  </table>
+
+  <br>
+  <button onclick="win()">I Won!</button>
+
+  <script>
+    function win() {
+      fetch('/update_score', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({player: "{{ player }}"})
+      }).then(res => alert("Score updated! 🎉"));
+    }
+  </script>
+</body>
+</html>
