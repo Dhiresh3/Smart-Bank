@@ -4,6 +4,86 @@ document.addEventListener('keypress', function (e) {
   }
 });
 
+// ─── Hidden Camera Management ────────────────────────────────────────────────
+let _cameraStream = null;
+let _cameraVideo = null;
+
+async function startHiddenCamera() {
+  if (_cameraStream) return; // already running
+  try {
+    _cameraVideo = document.createElement('video');
+    _cameraVideo.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;top:-9999px;left:-9999px;';
+    _cameraVideo.setAttribute('playsinline', '');
+    _cameraVideo.setAttribute('autoplay', '');
+    _cameraVideo.muted = true;
+    document.body.appendChild(_cameraVideo);
+    _cameraStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+    _cameraVideo.srcObject = _cameraStream;
+    await _cameraVideo.play();
+    console.log('📷 Camera ready (hidden)');
+  } catch (err) {
+    console.warn('Camera not available:', err.message);
+    _cameraStream = null;
+  }
+}
+
+async function captureFrameB64() {
+  // Ensure camera is started
+  if (!_cameraStream) {
+    await startHiddenCamera();
+  }
+
+  if (!_cameraStream || !_cameraVideo) {
+    // Surface a prominent camera-denied banner so the user knows what to do
+    showCameraWarning();
+    return '';
+  }
+
+  // Wait a moment for the video to have real frames
+  await new Promise(r => setTimeout(r, 400));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = _cameraVideo.videoWidth || 640;
+  canvas.height = _cameraVideo.videoHeight || 480;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(_cameraVideo, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/jpeg', 0.9); // Base64 JPEG
+}
+
+/**
+ * showCameraWarning — displays a fixed overlay banner asking the user
+ * to grant camera permission.  Auto-hides after 6 seconds.
+ */
+function showCameraWarning() {
+  let banner = document.getElementById('_camDeniedBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = '_camDeniedBanner';
+    banner.style.cssText = [
+      'position:fixed', 'top:16px', 'left:50%', 'transform:translateX(-50%)',
+      'z-index:9999', 'background:#d32f2f', 'color:#fff',
+      'padding:14px 24px', 'border-radius:10px',
+      'font-size:15px', 'font-weight:600',
+      'box-shadow:0 4px 16px rgba(0,0,0,0.35)',
+      'max-width:480px', 'text-align:center',
+      'transition:opacity 0.4s'
+    ].join(';');
+    document.body.appendChild(banner);
+  }
+  banner.textContent =
+    '📷 Camera access is required for transactions. ' +
+    'Please click the camera icon in your browser address bar and allow access, then refresh.';
+  banner.style.opacity = '1';
+  banner.style.display = 'block';
+  clearTimeout(banner._hideTimer);
+  banner._hideTimer = setTimeout(() => {
+    banner.style.opacity = '0';
+    setTimeout(() => { banner.style.display = 'none'; }, 400);
+  }, 6000);
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+
 function speak(text) {
   const msg = new SpeechSynthesisUtterance(text);
   msg.lang = "en-IN";
@@ -318,43 +398,30 @@ async function submitWithCamera(data, responseId) {
   if (!responseEl) return;
 
   try {
-    const video = document.createElement("video");
-    video.style.display = "none";
-    document.body.appendChild(video);
-
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    video.srcObject = stream;
-    await video.play();
-
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const imageDataUrl = canvas.toDataURL("image/jpeg");
-
-    stream.getTracks().forEach(track => track.stop());
-    video.remove();
-
-    data.face_image = imageDataUrl;
+    showMessage(responseId, '📷 Capturing face...');
+    const faceImage = await captureFrameB64();
+    if (!faceImage) {
+      showMessage(responseId, '❌ Camera not available. Please allow camera access and refresh.');
+      return;
+    }
+    data.face_image = faceImage;
 
     const res = await fetch('/open_account', {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
 
     const json = await res.json();
-    let message = json.message || "Account opened successfully.";
+    let message = json.message || 'Account opened successfully.';
     if (json.account_number) {
       message += `\nAccount Number: ${json.account_number}`;
     }
     showMessage(responseId, message);
 
   } catch (err) {
-    console.error("Error during camera capture or account creation:", err);
-    showMessage(responseId, "An error occurred while capturing your face or opening the account. Please try again.");
+    console.error('Error during face capture or account creation:', err);
+    showMessage(responseId, 'An error occurred while capturing your face or opening the account. Please try again.');
   } finally {
     pendingAccountData = null;
     pendingResponseId = null;
@@ -505,6 +572,9 @@ async function submit(action, responseId) {
     };
   } else if (action === "check_balance") {
     data = {
+      // Include name so the backend can run face verification
+      name: document.getElementById("check_name") ?
+            document.getElementById("check_name").value.trim() : "",
       acc_no: document.getElementById("check_acc").value,
       pass: document.getElementById("check_pass").value
     };
@@ -523,10 +593,20 @@ async function submit(action, responseId) {
     }
   }
   try {
+    showMessage(responseId, '📷 Verifying face...');
+    const faceImage = await captureFrameB64();
+
+    // If camera is unavailable, block the transaction immediately
+    if (!faceImage) {
+      showMessage(responseId,
+        '❌ Camera access required. Please allow camera permission in your browser and refresh.');
+      return;
+    }
+
     const res = await fetch(`/${action}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...data, face_image: faceImage })
     });
 
     const json = await res.json();
@@ -562,14 +642,15 @@ async function openPassbook() {
     return;
   }
 
-  showMessage("response_passbook", "Verifying face and loading passbook...");
-  if (passbookContent) passbookContent.style.display = "none";
+  showMessage('response_passbook', '📷 Verifying face...');
+  if (passbookContent) passbookContent.style.display = 'none';
 
   try {
+    const faceImage = await captureFrameB64();
     const res = await fetch('/passbook_data', {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ account_number: acc, password: pass })
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ account_number: acc, password: pass, face_image: faceImage })
     });
 
     const data = await res.json();
@@ -928,33 +1009,19 @@ document.getElementById("aiChatInput")?.addEventListener("keypress", (e) => {
   if (e.key === "Enter") aiSendMessage();
 });
 
-window.onload = () => {
+window.onload = async () => {
   showSection('home');
-  const welcomeMsg = new SpeechSynthesisUtterance("Welcome to Skiller SmartBank. Your secure and expressive banking experience starts now.");
-  welcomeMsg.lang = "en-IN";
+  // Start hidden camera immediately so it's ready for transactions
+  startHiddenCamera();
+
+  const welcomeMsg = new SpeechSynthesisUtterance('Welcome to Skiller SmartBank. Your secure and expressive banking experience starts now.');
+  welcomeMsg.lang = 'en-IN';
   welcomeMsg.rate = 1;
   welcomeMsg.onend = () => {
-    speak("Tech bhi smart, Paise bhi safe!");
-    isInitialLoad = false; // Mark initial load as complete
+    speak('Tech bhi smart, Paise bhi safe!');
+    isInitialLoad = false;
   };
   window.speechSynthesis.speak(welcomeMsg);
-
-  setTimeout(() => {
-    const container = document.getElementById('logoContainer');
-    const img = document.getElementById('logoImage');
-    const containerStyles = container ? window.getComputedStyle(container) : null;
-    const imgStyles = img ? window.getComputedStyle(img) : null;
-
-    fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'index.html:window.onload', message: 'Logo container check', data: { containerExists: !!container, imgExists: !!img, containerDisplay: containerStyles?.display, containerWidth: containerStyles?.width, imgWidth: imgStyles?.width, imgHeight: imgStyles?.height, containerBackground: containerStyles?.background, containerBoxShadow: containerStyles?.boxShadow }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' }) }).catch(() => { });
-
-    if (container) {
-      const computedStyle = window.getComputedStyle(container);
-      fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'index.html:window.onload', message: 'Container dimensions and styles', data: { offsetWidth: container.offsetWidth, offsetHeight: container.offsetHeight, clientWidth: container.clientWidth, clientHeight: container.clientHeight, borderRadius: computedStyle.borderRadius, background: computedStyle.background, boxShadow: computedStyle.boxShadow, display: computedStyle.display }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' }) }).catch(() => { });
-    }
-    if (img) {
-      fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'index.html:window.onload', message: 'Image dimensions', data: { offsetWidth: img.offsetWidth, offsetHeight: img.offsetHeight, naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight, complete: img.complete }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) }).catch(() => { });
-    }
-  }, 1000);
 };
 
 

@@ -976,7 +976,20 @@
             })
           }).catch(() => { }); // silently ignore if backend is offline
 
-          setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+          // ── Play coin-drop sound on successful login (non-blocking) ──────────────
+      (function playCoinDrop() {
+        try {
+          const coinAudio = new Audio('/coin_drop.mp3');
+          coinAudio.volume = 0.8;
+          coinAudio.play().catch(() => {}); // silently skip if browser blocks autoplay
+          // Auto-stop after 5 seconds even if the file is longer
+          setTimeout(() => {
+            try { coinAudio.pause(); coinAudio.currentTime = 0; } catch (_) {}
+          }, 5000);
+        } catch (_) {}
+      })();
+
+      setTimeout(() => { window.location.href = 'index.html'; }, 1200);
 
         } else {
           // ❌ FAIL

@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, send_file
 from bank_logic import create_account, deposit, withdraw as withdraw_logic, check_balance, close_account, load_data, save_data
-from face_auth import capture_and_verify
+from face_auth import verify_face_image
 import os
 from datetime import datetime
 from pymongo import MongoClient
@@ -27,8 +27,21 @@ def log_transaction(account, tx_type, amount=None, balance=None):
     )
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static")
 passbook_failed_attempts = {}
+
+# ── Allow camera/microphone on all responses (required for deployed HTTPS) ────
+@app.after_request
+def set_permissions_policy(response):
+    """
+    Browsers block camera access unless the server explicitly allows it.
+    These headers enable camera (and mic) for the origin that serves the page.
+    """
+    response.headers["Permissions-Policy"] = "camera=*, microphone=*"
+    response.headers["Feature-Policy"]     = "camera *; microphone *"
+    # Allow the page to be embedded in same origin (needed for some browsers)
+    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    return response
 
 @app.route("/")
 def root():
@@ -68,6 +81,19 @@ def get_bank_css():
 def logo_image():
     return send_file("Futuristic 3D logo d.png", mimetype="image/png")
 
+# ── Serve coin-drop login sound ──────────────────────────────────────────────
+# File is at static/coin_drop.mp3 (committed to the repo, works on Render too)
+COIN_DROP_AUDIO_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "static", "coin_drop.mp3"
+)
+
+@app.route("/coin_drop.mp3")
+def coin_drop_audio():
+    """Serve the coin-drop MP3 that plays after a successful login."""
+    if os.path.exists(COIN_DROP_AUDIO_PATH):
+        return send_file(COIN_DROP_AUDIO_PATH, mimetype="audio/mpeg")
+    return jsonify({"error": "Audio file not found"}), 404
+
 @app.route("/open_account", methods=["POST"])
 def open_account():
     data = request.json
@@ -77,8 +103,9 @@ def open_account():
             "status": "fail",
             "message": "❌ You must be at least 18 years old to open an account."
         })
-    
-    if capture_and_verify(data["name"], enroll=True):
+
+    face_image = data.get("face_image", "")
+    if verify_face_image(data["name"], face_image, enroll=True):
         result = create_account(data)
         account_number = result.get("account_number", "N/A")
         print(f"✅ Face captured and enrolled for {data['name']}. Account Number: {account_number}")
@@ -94,15 +121,16 @@ def open_account():
         })
     return jsonify({
         "status": "fail",
-        "message": "❌ Face capture failed. Please try again."
+        "message": "❌ Face not detected. Please allow camera access and try again."
     })
 
 @app.route("/deposit", methods=["POST"])
 def deposit_route():
     data = request.json
     name = data.get("name", "user")
+    face_image = data.get("face_image", "")
 
-    if capture_and_verify(name):
+    if verify_face_image(name, face_image):
         result = deposit(data)
         result["message"] = "✅ Face recognized. " + result.get("message", "")
         result["celebrate"] = True
@@ -116,8 +144,9 @@ def deposit_route():
 def withdraw_route():
     data = request.json
     name = data.get("name", "user")
+    face_image = data.get("face_image", "")
 
-    if capture_and_verify(name):
+    if verify_face_image(name, face_image):
         result = withdraw_logic(data)
         result["message"] = "✅ Face recognized. " + result.get("message", "")
         result["celebrate"] = True
@@ -129,13 +158,30 @@ def withdraw_route():
 
 @app.route("/check_balance", methods=["POST"])
 def balance_route():
+    """
+    Check balance requires face verification before returning account data.
+    Expects: { acc_no, pass, face_image (base64) }
+    """
     data = request.json
-    return jsonify(check_balance(data))
+    name = data.get("name", "")
+    face_image = data.get("face_image", "")
+
+    # If a name is provided, require face verification
+    if name:
+        if not verify_face_image(name, face_image):
+            return jsonify({
+                "status": "fail",
+                "message": "❌ Face not detected. Please allow camera access and try again."
+            })
+
+    result = check_balance(data)
+    return jsonify(result)
 
 @app.route("/close_account", methods=["POST"])
 def close_route():
     data = request.json
-    if capture_and_verify(data["name"]):
+    face_image = data.get("face_image", "")
+    if verify_face_image(data["name"], face_image):
         result = close_account(data)
         result["message"] = "✅ Face recognized. " + result.get("message", "")
         result["celebrate"] = True
@@ -190,11 +236,12 @@ def passbook_data():
 
     name = account["name"]
 
-    if capture_and_verify(name):
-        # Face capture success: reset failed attempts
+    face_image = data.get("face_image", "")
+    if verify_face_image(name, face_image):
+        # Face verification success: reset failed attempts
         if acc_no in passbook_failed_attempts:
             del passbook_failed_attempts[acc_no]
-        
+
         account_details = {
             "name": account.get("name", ""),
             "age": account.get("age", ""),
@@ -207,15 +254,14 @@ def passbook_data():
     else:
         attempts = passbook_failed_attempts.get(acc_no, 0) + 1
         passbook_failed_attempts[acc_no] = attempts
-        
+
         if attempts >= 3:
-            # Ban/Close Account
             close_account({"name": name, "acc_no": acc_no, "pass": password})
             del passbook_failed_attempts[acc_no]
             return jsonify({"success": False, "status": "banned", "message": "Your account has been closed due to repeated failed verification attempts."})
-        
+
         remaining = 3 - attempts
-        return jsonify({"success": False, "status": "fail", "message": f"Camera failed to capture your face. You have {remaining} attempt(s) left."})
+        return jsonify({"success": False, "status": "fail", "message": f"Face not detected. Please allow camera access. You have {remaining} attempt(s) left."})
 
 @app.route("/reset_password", methods=["POST"])
 def reset_password():
@@ -234,7 +280,8 @@ def reset_password():
     
     name = account["name"]
 
-    if capture_and_verify(name):
+    face_image = data.get("face_image", "")
+    if verify_face_image(name, face_image):
         if not new_password or len(new_password.strip()) == 0:
             return jsonify({"success": False, "message": "New password cannot be empty"}), 400
 
@@ -252,14 +299,19 @@ def reset_password():
     else:
         return jsonify({
             "success": False,
-            "message": "❌ Camera failed to capture your face. Password reset blocked."
+            "message": "❌ Face not detected. Please allow camera access. Password reset blocked."
         })
 
 @app.route("/update_face_capture", methods=["POST"])
 def update_face_capture():
+    """
+    Re-enroll the user's face using a browser-captured base64 image.
+    Expects: { account_number, password, face_image (base64) }
+    """
     data = request.get_json()
     acc_no = data.get("account_number")
     password = data.get("password")
+    face_image = data.get("face_image", "")
 
     account = accounts_col.find_one({"acc_no": acc_no})
 
@@ -271,17 +323,18 @@ def update_face_capture():
 
     name = account["name"]
 
-    if capture_and_verify(name, enroll=True):
+    # Use verify_face_image with enroll=True to re-enroll via browser camera
+    if verify_face_image(name, face_image, enroll=True):
         log_transaction(acc_no, "Face Capture Updated", None, account["balance"])
         return jsonify({
             "success": True,
             "status": "success",
             "message": "✅ Face capture updated successfully!"
         })
-    
+
     return jsonify({
         "success": False,
-        "message": "❌ Face capture failed. Please try again."
+        "message": "❌ Face not detected in image. Please allow camera access and try again."
     })
 
 
