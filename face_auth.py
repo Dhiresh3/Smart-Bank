@@ -138,3 +138,15 @@ def verify_face_image(name, face_b64, enroll=False):
     match = match_face_presence(name)
     print(f"Face verification for {name}: {match}")
     return match
+
+
+def delete_face(name):
+    """
+    Remove all face data for a user from MongoDB.
+    Called when an account is closed so no orphaned biometric data remains.
+    """
+    result = users_col.delete_one({"name": name})
+    if result.deleted_count:
+        print(f"🗑️  Face data deleted for {name}")
+    else:
+        print(f"ℹ️  No face data found for {name} — nothing to delete")

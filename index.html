@@ -617,7 +617,8 @@
           this.style.display = 'none';
         ">
     </div>
-    <p style="text-align: center; font-family: Arial, sans-serif;">Choose an action from the menu above to get started.</p>
+    <p style="text-align: center; font-family: Arial, sans-serif;">Choose an action from the menu above to get started.
+    </p>
   </div>
   <div id="loans" class="section">
     <h2>💰 Loans & Schemes</h2>
@@ -1399,7 +1400,6 @@ services, accounts, transactions, eligibility..." />
         <td>₹${outstandingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
       </tr>`;
 
-          // Show only first 12 months and last 12 months for long tenures
           if (numMonths > 24 && month === 12) {
             scheduleHTML += `<tr><td colspan="5" style="text-align: center; color: #666; font-style: italic;">... (showing first 12 months) ...</td></tr>`;
             month = numMonths - 12;
@@ -1499,7 +1499,20 @@ services, accounts, transactions, eligibility..." />
         };
 
         try {
-          // Log: submitting account creation request
+
+          // Capture face image via camera before submitting
+          showMessage(pendingResponseId, "📷 Capturing face image... Please look at your camera.");
+          let faceImage = "";
+          try {
+            faceImage = await captureFrameB64();
+          } catch (camErr) {
+            showMessage(pendingResponseId, "❌ Camera access denied or failed. Please allow camera access and try again.");
+            pendingAccountData = null;
+            pendingResponseId = null;
+            return;
+          }
+          data.face_image = faceImage;
+
           fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1552,7 +1565,6 @@ services, accounts, transactions, eligibility..." />
             })
           }).catch(() => ({}));
 
-          // Display success message with account details
           let successMessage = json.message || "Account opened successfully.";
           if (json.account_number) {
             successMessage += "<br><br><strong style='font-size: 16px; color: #0097a7;'>Account Details:</strong><br>";
@@ -2199,6 +2211,17 @@ services, accounts, transactions, eligibility..." />
         };
 
         try {
+          // Capture face image via camera before submitting
+          showMessage(responseId, "📷 Capturing face image... Please look at your camera.");
+          let faceImage = "";
+          try {
+            faceImage = await captureFrameB64();
+          } catch (camErr) {
+            showMessage(responseId, "❌ Camera access denied or failed. Please allow camera access and try again.");
+            return;
+          }
+          data.face_image = faceImage;
+
           // Log: submitting account creation request
           fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
             method: 'POST',
@@ -2500,7 +2523,111 @@ services, accounts, transactions, eligibility..." />
         }
       }, 1000);
     };
+
+    // ─── Camera Permission + Capture Helpers ─────────────────────────────────
+    let _cameraStream = null;
+    let _cameraPermissionResolve = null;
+
+    /** Show the "Camera Access Required" modal once per session, then return true/false */
+    function requestCameraPermission() {
+      return new Promise((resolve) => {
+        if (sessionStorage.getItem('cameraPermissionGranted') === 'true') {
+          resolve(true);
+          return;
+        }
+        if (sessionStorage.getItem('cameraPermissionDenied') === 'true') {
+          resolve(false);
+          return;
+        }
+        _cameraPermissionResolve = resolve;
+        const modal = document.getElementById('cameraPermissionModal');
+        if (modal) modal.style.display = 'flex';
+      });
+    }
+
+    function closeCameraPermissionModal(allowed) {
+      const modal = document.getElementById('cameraPermissionModal');
+      if (modal) modal.style.display = 'none';
+      if (allowed) {
+        sessionStorage.setItem('cameraPermissionGranted', 'true');
+      } else {
+        sessionStorage.setItem('cameraPermissionDenied', 'true');
+      }
+      if (_cameraPermissionResolve) {
+        _cameraPermissionResolve(allowed);
+        _cameraPermissionResolve = null;
+      }
+    }
+
+    /**
+     * Capture a single frame from the user's camera and return it as a base64 string.
+     * Shows the permission modal on first call, then reuses the stream.
+     */
+    async function captureFrameB64() {
+      const allowed = await requestCameraPermission();
+      if (!allowed) {
+        throw new Error('Camera permission denied by user.');
+      }
+      try {
+        if (!_cameraStream || !_cameraStream.active) {
+          _cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+          sessionStorage.setItem('cameraPermissionGranted', 'true');
+        }
+        const video = document.createElement('video');
+        video.srcObject = _cameraStream;
+        video.playsInline = true;
+        await video.play();
+
+        // Wait a moment for camera to warm up
+        await new Promise(r => setTimeout(r, 600));
+
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Stop tracks to release camera LED after each capture
+        _cameraStream.getTracks().forEach(t => t.stop());
+        _cameraStream = null;
+
+        return canvas.toDataURL('image/jpeg', 0.85); // returns data:image/jpeg;base64,...
+      } catch (err) {
+        console.error('Camera capture failed:', err);
+        throw err;
+      }
+    }
+
+    // Wire the modal Allow / Deny buttons
+    document.addEventListener('DOMContentLoaded', () => {
+      const allowBtn = document.getElementById('allowCameraBtn');
+      const denyBtn  = document.getElementById('denyCameraBtn');
+      if (allowBtn) allowBtn.addEventListener('click', () => closeCameraPermissionModal(true));
+      if (denyBtn)  denyBtn.addEventListener('click',  () => closeCameraPermissionModal(false));
+    });
+    // ─────────────────────────────────────────────────────────────────────────
+
   </script>
+
+  <!-- Camera Permission Modal -->
+  <div id="cameraPermissionModal" class="modal"
+    style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center;">
+    <div class="modal-content"
+      style="background: linear-gradient(135deg, #006064, #0097a7); color: white; text-align: center; max-width:420px; margin:auto; border-radius:16px; padding:36px 28px; box-shadow:0 8px 40px rgba(0,0,0,0.4);">
+      <div style="font-size:52px; margin-bottom:12px;">📷</div>
+      <h3 style="margin:0 0 10px; font-size:22px;">Camera Access Required</h3>
+      <p style="margin:0 0 24px; font-size:15px; line-height:1.6; opacity:0.9;">Skiller SmartBank uses your camera for
+        secure face verification. Please allow camera access when prompted by your browser.</p>
+      <div style="display:flex; gap:12px; justify-content:center;">
+        <button id="allowCameraBtn" class="action"
+          style="background:#51cf66; min-width:110px; border:none; border-radius:8px; padding:10px 20px; font-size:15px; cursor:pointer;">✅
+          Allow</button>
+        <button id="denyCameraBtn" class="action"
+          style="background:#ff6b6b; min-width:110px; border:none; border-radius:8px; padding:10px 20px; font-size:15px; cursor:pointer;">❌
+          Deny</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 
 </html>

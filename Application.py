@@ -81,6 +81,10 @@ def get_bank_css():
 def logo_image():
     return send_file("Futuristic 3D logo d.png", mimetype="image/png")
 
+@app.route("/test_camera.html")
+def test_camera():
+    return send_file("test_camera.html")
+
 # ── Serve coin-drop login sound ──────────────────────────────────────────────
 # File is at static/coin_drop.mp3 (committed to the repo, works on Render too)
 COIN_DROP_AUDIO_PATH = os.path.join(
@@ -323,7 +327,6 @@ def update_face_capture():
 
     name = account["name"]
 
-    # Use verify_face_image with enroll=True to re-enroll via browser camera
     if verify_face_image(name, face_image, enroll=True):
         log_transaction(acc_no, "Face Capture Updated", None, account["balance"])
         return jsonify({

@@ -2,6 +2,7 @@ import os
 import random
 from datetime import datetime
 from pymongo import MongoClient
+from face_auth import delete_face
 
 # MongoDB connection — uses MONGO_URI env var for deployment, falls back to localhost
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
@@ -186,6 +187,10 @@ def close_account(data):
     account = accounts_col.find_one({"acc_no": acc_no})
 
     if account and account["pass"] == data["pass"]:
+        # Delete face data from MongoDB before removing account
+        name = account.get("name", "")
+        if name:
+            delete_face(name)
         accounts_col.delete_one({"acc_no": acc_no})
         return {"status": "success", "message": f"Account {acc_no} closed successfully"}
     return {"status": "fail", "message": "Invalid credentials"}

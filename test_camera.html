@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Test - Skiller SmartBank</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        button {
+            background: #0097a7;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #006064;
+        }
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        img {
+            margin-top: 20px;
+            max-width: 100%;
+            border-radius: 8px;
+            border: 2px solid #0097a7;
+            display: none;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: linear-gradient(135deg, #006064, #0097a7);
+            color: white;
+            text-align: center;
+            max-width: 420px;
+            margin: auto;
+            border-radius: 16px;
+            padding: 36px 28px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Camera Verification Test</h1>
+        <p>Click the button below to test the camera capture system.</p>
+        <button id="testBtn">Test Camera Capture</button>
+        <div id="result"></div>
+        <img id="preview" alt="Captured Face">
+    </div>
+
+    <!-- Camera Permission Modal -->
+    <div id="cameraPermissionModal" class="modal">
+        <div class="modal-content">
+            <div style="font-size:52px; margin-bottom:12px;">📷</div>
+            <h3 style="margin:0 0 10px; font-size:22px;">Camera Access Required</h3>
+            <p style="margin:0 0 24px; font-size:15px; line-height:1.6; opacity:0.9;">Skiller SmartBank uses your camera for secure face verification. Please allow camera access when prompted by your browser.</p>
+            <div style="display:flex; gap:12px; justify-content:center;">
+                <button id="allowCameraBtn" style="background:#51cf66; min-width:110px;">✅ Allow</button>
+                <button id="denyCameraBtn" style="background:#ff6b6b; min-width:110px;">❌ Deny</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let _cameraStream = null;
+        let _cameraPermissionResolve = null;
+
+        function requestCameraPermission() {
+            return new Promise((resolve) => {
+                if (sessionStorage.getItem('cameraPermissionGranted') === 'true') {
+                    resolve(true);
+                    return;
+                }
+                _cameraPermissionResolve = resolve;
+                document.getElementById('cameraPermissionModal').style.display = 'flex';
+            });
+        }
+
+        function closeCameraPermissionModal(allowed) {
+            document.getElementById('cameraPermissionModal').style.display = 'none';
+            if (allowed) sessionStorage.setItem('cameraPermissionGranted', 'true');
+            if (_cameraPermissionResolve) {
+                _cameraPermissionResolve(allowed);
+                _cameraPermissionResolve = null;
+            }
+        }
+
+        async function captureFrameB64() {
+            const allowed = await requestCameraPermission();
+            if (!allowed) throw new Error('Permission denied');
+            
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            await video.play();
+            
+            await new Promise(r => setTimeout(r, 1000));
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            stream.getTracks().forEach(t => t.stop());
+            return canvas.toDataURL('image/jpeg');
+        }
+
+        document.getElementById('testBtn').addEventListener('click', async () => {
+            const result = document.getElementById('result');
+            const preview = document.getElementById('preview');
+            result.innerText = "Processing...";
+            preview.style.display = "none";
+            
+            try {
+                const b64 = await captureFrameB64();
+                result.innerText = "✅ Success! Face captured.";
+                preview.src = b64;
+                preview.style.display = "block";
+            } catch (err) {
+                result.innerText = "❌ Error: " + err.message;
+            }
+        });
+
+        document.getElementById('allowCameraBtn').addEventListener('click', () => closeCameraPermissionModal(true));
+        document.getElementById('denyCameraBtn').addEventListener('click', () => closeCameraPermissionModal(false));
+    </script>
+</body>
+</html>
