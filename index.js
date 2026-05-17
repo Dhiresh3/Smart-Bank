@@ -22,7 +22,12 @@ async function startHiddenCamera() {
     console.log('📷 Camera ready (hidden)');
   } catch (err) {
     console.warn('Camera not available:', err.message);
+    // Clear BOTH so captureFrameB64 guard works correctly
+    if (_cameraVideo && _cameraVideo.parentNode) {
+      _cameraVideo.parentNode.removeChild(_cameraVideo);
+    }
     _cameraStream = null;
+    _cameraVideo = null;
   }
 }
 
@@ -32,13 +37,18 @@ async function captureFrameB64() {
   }
 
   if (!_cameraStream || !_cameraVideo) {
-
     showCameraWarning();
     return '';
   }
 
+  // Wait for video to have real dimensions (up to 2s), avoids black frames on first capture
+  const deadline = Date.now() + 2000;
+  while ((_cameraVideo.videoWidth === 0 || _cameraVideo.videoHeight === 0) && Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, 100));
+  }
 
-  await new Promise(r => setTimeout(r, 400));
+  // Extra settle time after dimensions are known
+  await new Promise(r => setTimeout(r, 200));
 
   const canvas = document.createElement('canvas');
   canvas.width = _cameraVideo.videoWidth || 640;
