@@ -11,6 +11,8 @@ client = MongoClient(MONGO_URI)
 db = client["smartbank"]
 accounts_col = db["accounts"]
 logins_col = db["logins"]
+verification_failures_col = db["verification_failures"]
+
 
 
 def log_transaction(account, tx_type, amount=None, balance=None):
@@ -259,13 +261,15 @@ def passbook_data():
         attempts = passbook_failed_attempts.get(acc_no, 0) + 1
         passbook_failed_attempts[acc_no] = attempts
 
-        if attempts >= 3:
+        if attempts >= 5:
             close_account({"name": name, "acc_no": acc_no, "pass": password})
-            del passbook_failed_attempts[acc_no]
+            if acc_no in passbook_failed_attempts:
+                del passbook_failed_attempts[acc_no]
             return jsonify({"success": False, "status": "banned", "message": "Your account has been closed due to repeated failed verification attempts."})
 
-        remaining = 3 - attempts
+        remaining = 5 - attempts
         return jsonify({"success": False, "status": "fail", "message": f"Face not detected. Please allow camera access. You have {remaining} attempt(s) left."})
+
 
 @app.route("/reset_password", methods=["POST"])
 def reset_password():
@@ -395,6 +399,34 @@ def log_login():
     return jsonify({"status": "success", "message": "Login recorded"})
 
 
+@app.route("/log_failed_attempt", methods=["POST"])
+def log_failed_attempt():
+    """
+    Log verification failures into MongoDB for auditing purposes.
+    Expects: { account_number, action, attempt, reason }
+    """
+    data = request.get_json(force=True, silent=True) or {}
+    acc_no = data.get("account_number", "Unknown")
+    action = data.get("action", "Unknown")
+    attempt = data.get("attempt", 0)
+    reason = data.get("reason", "Face verification failed")
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Record failure event in MongoDB collection
+    verification_failures_col.insert_one({
+        "account_number": acc_no,
+        "action": action,
+        "attempt": attempt,
+        "reason": reason,
+        "timestamp": timestamp
+    })
+
+    print(f"AUDIT WARNING: Failed verification attempt {attempt}/5 on action '{action}' for account {acc_no}. Reason: {reason}")
+
+    return jsonify({"status": "success", "message": "Verification failure logged for audit."})
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+

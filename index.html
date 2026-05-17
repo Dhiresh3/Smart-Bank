@@ -2317,30 +2317,53 @@ services, accounts, transactions, eligibility..." />
         }
         return;
       }
+      // ─── Biometric Security Lockout Check ───
+      if (failedAttemptsCount >= 5) {
+        const lockoutMsg = "🔒 Security Lockout: You have exceeded the maximum 5 verification attempts for this session. Transactions are blocked. Please contact support.";
+        showMessage(responseId, lockoutMsg);
+        speak("Security Lockout: Maximum face verification attempts exceeded. Transactions are blocked.");
+        return;
+      }
+
       let data = {};
+      let name = "user";
+      let acc_no = "unknown";
+
       if (action === "deposit") {
+        name = document.getElementById("dep_name").value;
+        acc_no = document.getElementById("dep_acc").value;
         data = {
-          name: document.getElementById("dep_name").value,
-          acc_no: document.getElementById("dep_acc").value,
+          name: name,
+          acc_no: acc_no,
           pass: document.getElementById("dep_pass").value,
           amount: parseFloat(document.getElementById("dep_amt").value)
         };
       } else if (action === "withdraw") {
+        name = document.getElementById("with_name").value;
+        acc_no = document.getElementById("with_acc").value;
         data = {
-          name: document.getElementById("with_name").value,
-          acc_no: document.getElementById("with_acc").value,
+          name: name,
+          acc_no: acc_no,
           pass: document.getElementById("with_pass").value,
           amount: parseFloat(document.getElementById("with_amt").value)
         };
       } else if (action === "check_balance") {
+        acc_no = document.getElementById("check_acc").value;
+        // Check sessionStorage for logged-in user details to get registered name
+        const storedAcc = sessionStorage.getItem('loggedInAcc');
+        const storedName = sessionStorage.getItem('loggedInName');
+        name = (storedAcc === acc_no && storedName) ? storedName : "user";
         data = {
-          acc_no: document.getElementById("check_acc").value,
+          name: name,
+          acc_no: acc_no,
           pass: document.getElementById("check_pass").value
         };
       } else if (action === "close_account") {
+        name = document.getElementById("close_name").value;
+        acc_no = document.getElementById("close_acc").value;
         data = {
-          name: document.getElementById("close_name").value,
-          acc_no: document.getElementById("close_acc").value,
+          name: name,
+          acc_no: acc_no,
           pass: document.getElementById("close_pass").value
         };
       }
@@ -2351,6 +2374,31 @@ services, accounts, transactions, eligibility..." />
           return;
         }
       }
+
+      // Show professional camera alert prompt and capture base64 face image
+      showMessage(responseId, "📷 Capturing face image... Please look at your camera.");
+      let faceImage = "";
+      try {
+        const promptMsg = `This transaction requires camera access. Please click 'Allow' in your browser prompt to continue.`;
+        faceImage = await captureFrameB64(promptMsg, true);
+      } catch (camErr) {
+        const attempts = incrementFailedAttempts();
+        await logFailedAttemptToBackend(acc_no, action, attempts, `Camera capture failed: ${camErr.message}`);
+        
+        if (attempts >= 5) {
+          const lockoutMsg = "🔒 Security Lockout: You have exceeded the maximum 5 verification attempts for this session. Transactions are blocked. Please contact support.";
+          showMessage(responseId, lockoutMsg);
+          speak("Security Lockout: Maximum face verification attempts exceeded. Transactions are blocked.");
+        } else {
+          showMessage(responseId, `❌ Camera access denied or failed (Attempt ${attempts} of 5). Please allow camera access and try again.`);
+          speak("Camera access failed. Please try again.");
+        }
+        return;
+      }
+
+      // Attach base64 face image to the payload
+      data.face_image = faceImage;
+
       try {
         const res = await fetch(`/${action}`, {
           method: "POST",
@@ -2359,19 +2407,33 @@ services, accounts, transactions, eligibility..." />
         });
 
         const json = await res.json();
+
+        // Check if face verification failed
+        if (json.status === "fail" && (json.message.includes("Face not recognized") || json.message.includes("Face not detected"))) {
+          const attempts = incrementFailedAttempts();
+          await logFailedAttemptToBackend(acc_no, action, attempts, json.message || "Face not recognized.");
+          
+          if (attempts >= 5) {
+            const lockoutMsg = "🔒 Security Lockout: You have exceeded the maximum 5 verification attempts for this session. Transactions are blocked. Please contact support.";
+            showMessage(responseId, lockoutMsg);
+            speak("Security Lockout: Maximum face verification attempts exceeded. Transactions are blocked.");
+          } else {
+            showMessage(responseId, `❌ ${json.message || "Face not recognized."} (Attempt ${attempts} of 5). Please try again.`);
+            speak(json.message || "Face not recognized. Please try again.");
+          }
+          return;
+        }
+
+        // Verification succeeded! Reset failed attempts count
+        resetFailedAttempts();
+
         const message = json.message || (json.balance !== undefined ? `Balance: ₹${json.balance}` : JSON.stringify(json));
         showMessage(responseId, message);
         if (json.message) speak(json.message);
 
-        if (json.message && json.message.includes("Face not recognized")) {
-          if (action === "deposit") {
-            document.getElementById("retry_deposit").style.display = "inline-block";
-          } else if (action === "withdraw") {
-            document.getElementById("retry_withdraw").style.display = "inline-block";
-          }
-        } else {
-          document.getElementById("retry_deposit").style.display = "none";
-          document.getElementById("retry_withdraw").style.display = "none";
+        // Confetti effect on success
+        if (json.status === "success" && typeof confetti === "function") {
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         }
       } catch (error) {
         console.error("Error:", error);
@@ -2387,13 +2449,42 @@ services, accounts, transactions, eligibility..." />
         return;
       }
 
-      showMessage("response_passbook", "⏳ Verifying credentials... Camera window will open shortly. Minimize your browser to see it.");
+      // ─── Biometric Security Lockout Check ───
+      if (failedAttemptsCount >= 5) {
+        const lockoutMsg = "🔒 Security Lockout: You have exceeded the maximum 5 verification attempts for this session. Transactions are blocked. Please contact support.";
+        showMessage("response_passbook", lockoutMsg);
+        speak("Security Lockout: Maximum face verification attempts exceeded. Transactions are blocked.");
+        return;
+      }
+
+      // Show webpage permission alert and capture face frame
+      showMessage("response_passbook", "📷 Capturing face image... Please look at your camera.");
+      let faceImage = "";
+      try {
+        const promptMsg = `This transaction requires camera access. Please click 'Allow' in your browser prompt to continue.`;
+        faceImage = await captureFrameB64(promptMsg, true);
+      } catch (camErr) {
+        const attempts = incrementFailedAttempts();
+        await logFailedAttemptToBackend(acc, "view_passbook", attempts, `Camera capture failed: ${camErr.message}`);
+        
+        if (attempts >= 5) {
+          const lockoutMsg = "🔒 Security Lockout: You have exceeded the maximum 5 verification attempts for this session. Transactions are blocked. Please contact support.";
+          showMessage("response_passbook", lockoutMsg);
+          speak("Security Lockout: Maximum face verification attempts exceeded. Transactions are blocked.");
+        } else {
+          showMessage("response_passbook", `❌ Camera access denied or failed (Attempt ${attempts} of 5). Please allow camera access and try again.`);
+          speak("Camera access failed. Please try again.");
+        }
+        return;
+      }
+
+      showMessage("response_passbook", "⏳ Verifying credentials... Please look at your camera.");
 
       try {
         const res = await fetch("/passbook_data", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ account_number: acc, password: pass })
+          body: JSON.stringify({ account_number: acc, password: pass, face_image: faceImage })
         });
 
         const data = await res.json();
@@ -2407,9 +2498,22 @@ services, accounts, transactions, eligibility..." />
         }
 
         if (!data.success) {
-          showMessage("response_passbook", "❌ " + (data.message || "Verification failed. Please try again."));
+          const attempts = incrementFailedAttempts();
+          await logFailedAttemptToBackend(acc, "view_passbook", attempts, data.message || "Face not recognized.");
+          
+          if (attempts >= 5) {
+            const lockoutMsg = "🔒 Security Lockout: You have exceeded the maximum 5 verification attempts for this session. Transactions are blocked. Please contact support.";
+            showMessage("response_passbook", lockoutMsg);
+            speak("Security Lockout: Maximum face verification attempts exceeded. Transactions are blocked.");
+          } else {
+            showMessage("response_passbook", `❌ ${data.message || "Verification failed."} (Attempt ${attempts} of 5). Please try again.`);
+            speak(data.message || "Verification failed. Please try again.");
+          }
           return;
         }
+
+        // Verification succeeded! Reset failed attempts count
+        resetFailedAttempts();
 
         // Success — show the passbook
         const details = data.account_details;
@@ -2445,11 +2549,16 @@ services, accounts, transactions, eligibility..." />
             </table>
             <button class="action" style="margin-top:20px" onclick="document.getElementById('passbook_form').style.display='block';document.getElementById('passbook_content').style.display='none';">🔙 Back</button>
           </div>`;
+          
+          if (typeof confetti === "function") {
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+          }
       } catch (err) {
         showMessage("response_passbook", "❌ Error connecting to server. Please try again.");
         console.error(err);
       }
     }
+
 
     function sendMessage() {
 
@@ -2524,24 +2633,47 @@ services, accounts, transactions, eligibility..." />
       }, 1000);
     };
 
+    // ─── Biometric Attempt Counter ───────────────────────────────────────────
+    // Persistent across page reloads in this session, as requested.
+    let failedAttemptsCount = parseInt(sessionStorage.getItem('failed_attempts') || '0');
+
+    function incrementFailedAttempts() {
+      failedAttemptsCount++;
+      sessionStorage.setItem('failed_attempts', failedAttemptsCount.toString());
+      return failedAttemptsCount;
+    }
+
+    function resetFailedAttempts() {
+      failedAttemptsCount = 0;
+      sessionStorage.setItem('failed_attempts', '0');
+    }
+
     // ─── Camera Permission + Capture Helpers ─────────────────────────────────
     let _cameraStream = null;
     let _cameraPermissionResolve = null;
 
-    /** Show the "Camera Access Required" modal once per session, then return true/false */
-    function requestCameraPermission() {
+    /** Show the "Camera Access Required" modal, then return true/false */
+    function requestCameraPermission(messageText, isForcePrompt = false) {
       return new Promise((resolve) => {
-        if (sessionStorage.getItem('cameraPermissionGranted') === 'true') {
-          resolve(true);
-          return;
-        }
-        if (sessionStorage.getItem('cameraPermissionDenied') === 'true') {
-          resolve(false);
-          return;
+        if (!isForcePrompt) {
+          if (sessionStorage.getItem('cameraPermissionGranted') === 'true') {
+            resolve(true);
+            return;
+          }
+          if (sessionStorage.getItem('cameraPermissionDenied') === 'true') {
+            resolve(false);
+            return;
+          }
         }
         _cameraPermissionResolve = resolve;
         const modal = document.getElementById('cameraPermissionModal');
-        if (modal) modal.style.display = 'flex';
+        const textEl = document.getElementById('cameraPermissionText');
+        if (textEl) {
+          textEl.textContent = messageText || "This transaction requires camera access. Please click 'Allow' in your browser prompt to continue.";
+        }
+        if (modal) {
+          modal.style.display = 'flex';
+        }
       });
     }
 
@@ -2560,30 +2692,80 @@ services, accounts, transactions, eligibility..." />
     }
 
     /**
-     * Capture a single frame from the user's camera and return it as a base64 string.
-     * Shows the permission modal on first call, then reuses the stream.
+     * Log verification failure for security auditing.
      */
-    async function captureFrameB64() {
-      const allowed = await requestCameraPermission();
+    async function logFailedAttemptToBackend(accNo, action, attemptNum, reason) {
+      try {
+        await fetch('/log_failed_attempt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            account_number: accNo || 'Unknown',
+            action: action || 'Unknown',
+            attempt: attemptNum,
+            reason: reason || 'Face verification failed'
+          })
+        });
+      } catch (err) {
+        console.error('Audit logging failed:', err);
+      }
+    }
+
+    /**
+     * Capture a single frame from the user's camera and return it as a base64 string.
+     * Implements dynamic message text and an automatic 5-attempt retry loop on camera hardware startup.
+     */
+    async function captureFrameB64(messageText, isForcePrompt = false) {
+      const allowed = await requestCameraPermission(messageText, isForcePrompt);
       if (!allowed) {
         throw new Error('Camera permission denied by user.');
       }
-      try {
-        if (!_cameraStream || !_cameraStream.active) {
-          _cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-          sessionStorage.setItem('cameraPermissionGranted', 'true');
+
+      // Automatic 5-attempt retry loop for camera initialization (getUserMedia)
+      let streamError = null;
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        try {
+          if (!_cameraStream || !_cameraStream.active) {
+            _cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+            sessionStorage.setItem('cameraPermissionGranted', 'true');
+          }
+          break; // success! exit retry loop
+        } catch (err) {
+          console.warn(`Camera initialization attempt ${attempt}/5 failed:`, err);
+          streamError = err;
+          if (attempt < 5) {
+            // Wait 500ms before retrying
+            await new Promise(r => setTimeout(r, 500));
+          }
         }
+      }
+
+      if (!_cameraStream || !_cameraStream.active) {
+        const errMsg = 'Failed to initialize device camera stream after 5 attempts.';
+        console.error(errMsg, streamError);
+        throw new Error(errMsg);
+      }
+
+      try {
         const video = document.createElement('video');
         video.srcObject = _cameraStream;
         video.playsInline = true;
         await video.play();
 
-        // Wait a moment for camera to warm up
-        await new Promise(r => setTimeout(r, 600));
+        // Wait a moment for camera to warm up and get valid video dimensions
+        // Add a 2-second timeout loop to wait for valid dimensions (prevents black frames)
+        let dimensionsOk = false;
+        for (let i = 0; i < 20; i++) {
+          if (video.videoWidth > 0 && video.videoHeight > 0) {
+            dimensionsOk = true;
+            break;
+          }
+          await new Promise(r => setTimeout(r, 100));
+        }
 
         const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 480;
+        canvas.width = dimensionsOk ? video.videoWidth : 640;
+        canvas.height = dimensionsOk ? video.videoHeight : 480;
         canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
 
         // Stop tracks to release camera LED after each capture
@@ -2592,7 +2774,7 @@ services, accounts, transactions, eligibility..." />
 
         return canvas.toDataURL('image/jpeg', 0.85); // returns data:image/jpeg;base64,...
       } catch (err) {
-        console.error('Camera capture failed:', err);
+        console.error('Camera frame capture failed:', err);
         throw err;
       }
     }
@@ -2606,27 +2788,28 @@ services, accounts, transactions, eligibility..." />
     });
     // ─────────────────────────────────────────────────────────────────────────
 
+
   </script>
 
   <!-- Camera Permission Modal -->
   <div id="cameraPermissionModal" class="modal"
-    style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center;">
+    style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(3, 9, 18, 0.85); justify-content:center; align-items:center; backdrop-filter:blur(8px); transition:all 0.3s ease;">
     <div class="modal-content"
-      style="background: linear-gradient(135deg, #006064, #0097a7); color: white; text-align: center; max-width:420px; margin:auto; border-radius:16px; padding:36px 28px; box-shadow:0 8px 40px rgba(0,0,0,0.4);">
-      <div style="font-size:52px; margin-bottom:12px;">📷</div>
-      <h3 style="margin:0 0 10px; font-size:22px;">Camera Access Required</h3>
-      <p style="margin:0 0 24px; font-size:15px; line-height:1.6; opacity:0.9;">Skiller SmartBank uses your camera for
-        secure face verification. Please allow camera access when prompted by your browser.</p>
-      <div style="display:flex; gap:12px; justify-content:center;">
+      style="background:rgba(5, 20, 35, 0.95); border:1px solid rgba(0, 188, 212, 0.3); color: white; text-align: center; max-width:440px; margin:auto; border-radius:24px; padding:44px 36px; box-shadow:0 24px 70px rgba(0,0,0,0.8), 0 0 40px rgba(0, 188, 212, 0.1); transform-style:preserve-3d;">
+      <div style="font-size:56px; margin-bottom:20px; filter: drop-shadow(0 0 15px rgba(0, 188, 212, 0.5)); animation: pulse 2s ease-in-out infinite;">📷</div>
+      <h3 style="margin:0 0 12px; font-size:24px; font-family:'Playfair Display', serif; font-weight:600; background:linear-gradient(135deg, #fff 30%, #00bcd4); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">Camera Access Required</h3>
+      <p id="cameraPermissionText" style="margin:0 0 28px; font-size:15px; line-height:1.6; color:#e4f4ff; opacity:0.95; font-family:'DM Sans', sans-serif;">This transaction requires camera access. Please click 'Allow' in your browser prompt to continue.</p>
+      <div style="display:flex; gap:16px; justify-content:center;">
         <button id="allowCameraBtn" class="action"
-          style="background:#51cf66; min-width:110px; border:none; border-radius:8px; padding:10px 20px; font-size:15px; cursor:pointer;">✅
+          style="background:linear-gradient(135deg, #2ecc71, #27ae60); min-width:120px; border:none; border-radius:12px; padding:12px 24px; font-size:15px; font-weight:bold; color:white; cursor:pointer; box-shadow:0 4px 15px rgba(46, 204, 113, 0.3); transition:all 0.2s;">✅
           Allow</button>
         <button id="denyCameraBtn" class="action"
-          style="background:#ff6b6b; min-width:110px; border:none; border-radius:8px; padding:10px 20px; font-size:15px; cursor:pointer;">❌
+          style="background:linear-gradient(135deg, #e74c3c, #c0392b); min-width:120px; border:none; border-radius:12px; padding:12px 24px; font-size:15px; font-weight:bold; color:white; cursor:pointer; box-shadow:0 4px 15px rgba(231, 76, 60, 0.3); transition:all 0.2s;">❌
           Deny</button>
       </div>
     </div>
   </div>
+
 
 </body>
 
