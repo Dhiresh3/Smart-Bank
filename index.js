@@ -4,12 +4,11 @@ document.addEventListener('keypress', function (e) {
   }
 });
 
-// ─── Hidden Camera Management ────────────────────────────────────────────────
 let _cameraStream = null;
 let _cameraVideo = null;
 
 async function startHiddenCamera() {
-  if (_cameraStream) return; // already running
+  if (_cameraStream) return;
   try {
     _cameraVideo = document.createElement('video');
     _cameraVideo.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;top:-9999px;left:-9999px;';
@@ -28,18 +27,17 @@ async function startHiddenCamera() {
 }
 
 async function captureFrameB64() {
-  // Ensure camera is started
   if (!_cameraStream) {
     await startHiddenCamera();
   }
 
   if (!_cameraStream || !_cameraVideo) {
-    // Surface a prominent camera-denied banner so the user knows what to do
+
     showCameraWarning();
     return '';
   }
 
-  // Wait a moment for the video to have real frames
+
   await new Promise(r => setTimeout(r, 400));
 
   const canvas = document.createElement('canvas');
@@ -169,12 +167,15 @@ function showMessage(elementId, message) {
   element.innerText = message;
   element.style.display = 'block';
 
-  // Auto-hide after 2.5 seconds
+  // Errors and camera messages stay longer so the user can read them
+  const isError = message.startsWith('❌') || message.toLowerCase().includes('camera') || message.toLowerCase().includes('face');
+  const delay = isError ? 6000 : 2500;
+
   messageTimeouts[elementId] = setTimeout(() => {
     element.innerText = "";
     element.style.display = 'none';
     delete messageTimeouts[elementId];
-  }, 2500);
+  }, delay);
 }
 function playAudioForSection(sectionName) {
   try {
@@ -574,7 +575,7 @@ async function submit(action, responseId) {
     data = {
       // Include name so the backend can run face verification
       name: document.getElementById("check_name") ?
-            document.getElementById("check_name").value.trim() : "",
+        document.getElementById("check_name").value.trim() : "",
       acc_no: document.getElementById("check_acc").value,
       pass: document.getElementById("check_pass").value
     };
@@ -647,11 +648,25 @@ async function openPassbook() {
 
   try {
     const faceImage = await captureFrameB64();
+
+    // Guard: if camera is blocked, tell the user clearly
+    if (!faceImage) {
+      showMessage('response_passbook',
+        '❌ Camera access required. Please allow camera permission in your browser address bar, then try again.');
+      return;
+    }
+
     const res = await fetch('/passbook_data', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ account_number: acc, password: pass, face_image: faceImage })
     });
+
+    // Handle bad credentials (401) explicitly so user sees an error
+    if (res.status === 401) {
+      showMessage('response_passbook', '❌ Invalid Account Number or Password. Please try again.');
+      return;
+    }
 
     const data = await res.json();
 
