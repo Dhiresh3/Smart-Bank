@@ -4,6 +4,10 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from twilio.rest import Client
 from cryptography.fernet import Fernet
+from dotenv import load_dotenv
+
+# Load environment variables from .env if present (useful for local development)
+load_dotenv()
 
 ENCRYPTION_KEY = os.environ.get("ENCRYPTION_KEY")
 if not ENCRYPTION_KEY:
