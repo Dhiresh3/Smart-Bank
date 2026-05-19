@@ -12,6 +12,9 @@ db = client["smartbank"]
 accounts_col = db["accounts"]
 logins_col = db["logins"]
 verification_failures_col = db["verification_failures"]
+complaints_col = db["complaints"]
+
+import mysql_backup
 
 
 
@@ -298,6 +301,10 @@ def reset_password():
             {"$set": {"pass": new_password}}
         )
         log_transaction(acc_no, "Password Reset", None, account["balance"])
+        
+        updated_account = accounts_col.find_one({"acc_no": acc_no})
+        if updated_account:
+            mysql_backup.sync_account(updated_account)
 
         return jsonify({
             "success": True,
@@ -395,6 +402,7 @@ def log_login():
         "username": username,
         "login_time": login_time
     })
+    mysql_backup.add_login(username, login_time)
 
     return jsonify({"status": "success", "message": "Login recorded"})
 
@@ -420,13 +428,43 @@ def log_failed_attempt():
         "reason": reason,
         "timestamp": timestamp
     })
+    mysql_backup.add_verification_failure(acc_no, action, attempt, reason, timestamp)
 
     print(f"AUDIT WARNING: Failed verification attempt {attempt}/5 on action '{action}' for account {acc_no}. Reason: {reason}")
 
     return jsonify({"status": "success", "message": "Verification failure logged for audit."})
 
 
+@app.route("/register_complaint", methods=["POST"])
+def register_complaint():
+    data = request.get_json(force=True, silent=True) or {}
+    name = data.get("name", "").strip()
+    email = data.get("email", "").strip()
+    contact = data.get("contact_number", "").strip()
+    comments = data.get("comments", "").strip()
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    if not name or not email or not contact or not comments:
+        return jsonify({"success": False, "message": "All fields are required."}), 400
+
+    # Insert into MongoDB
+    complaints_col.insert_one({
+        "name": name,
+        "email": email,
+        "contact_number": contact,
+        "comments": comments,
+        "timestamp": timestamp
+    })
+
+    # Backup to MySQL
+    mysql_backup.add_complaint(name, email, contact, comments, timestamp)
+
+    return jsonify({"success": True, "message": "✅ Your thoughts have been registered successfully! Thank you."})
+
+
 if __name__ == "__main__":
+    mysql_backup.init_db()
+    mysql_backup.sync_all_mongo_to_sqlite()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
 

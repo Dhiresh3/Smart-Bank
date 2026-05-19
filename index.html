@@ -1049,8 +1049,7 @@ message..." />
           assistant. I'll keep replies concise, secure, and professional.</div>
       </div>
       <div class="ai-chat-input">
-        <input type="text" id="aiChatInput" placeholder="Ask about 
-services, accounts, transactions, eligibility..." />
+        <input type="text" id="aiChatInput" placeholder="Ask about services, accounts, transactions, eligibility..." />
         <button onclick="aiSendMessage()">Send</button>
       </div>
     </div>
@@ -1060,10 +1059,46 @@ services, accounts, transactions, eligibility..." />
       suggest contacting support.
     </p>
   </div>
+  <div class="section" id="complaint">
+    <h2>📝 e-Complaint & Suggestion Registration</h2>
+    <div
+      style="background: linear-gradient(135deg, darkcyan, #008b8b); border: 2px solid #005f5f; border-radius: 10px; padding: 15px; margin: 20px auto; max-width: 600px; text-align: left;">
+      <p style="color: white; font-size: 14px; line-height: 1.6; margin: 10px 0;">
+        <strong>💡 We Value Your Feedback!</strong><br>
+        Whether you have a complaint, feedback, or a suggestion to improve Skiller SmartBank, please share your thoughts.
+        All entries are securely registered in our system and duplicate backups are maintained for recovery purposes.
+      </p>
+    </div>
+    <div class="card" style="max-width: 600px; border-top: 4px solid darkcyan;">
+      <h3 style="color: darkcyan;">Register Your Thoughts</h3>
+      <div class="form-group">
+        <label for="complaint_name">Full Name *</label>
+        <input type="text" id="complaint_name" placeholder="Enter your full name" required style="border-color: darkcyan;" />
+      </div>
+      <div class="form-group">
+        <label for="complaint_email">Email Address *</label>
+        <input type="email" id="complaint_email" placeholder="Enter your email address" required style="border-color: darkcyan;" />
+      </div>
+      <div class="form-group">
+        <label for="complaint_phone">Contact Number *</label>
+        <input type="tel" id="complaint_phone" placeholder="Enter your contact number" required style="border-color: darkcyan;" />
+      </div>
+      <div class="form-group">
+        <label for="complaint_comments">Comments / Thoughts *</label>
+        <textarea id="complaint_comments" placeholder="Describe your complaint or suggestion..." style="width: 80%; margin: 10px auto; display: block; padding: 12px; font-size: 16px; border-radius: 10px; border: 1px solid darkcyan; height: 120px; font-family: inherit; transition: all 0.3s ease; box-sizing: border-box;" required></textarea>
+      </div>
+      <button class="action" onclick="submitComplaint()" style="background: linear-gradient(135deg, darkcyan, #008b8b);">Submit thoughts</button>
+      <div id="response_complaint" class="response"></div>
+    </div>
+  </div>
+
   <footer>
     <p>© 2025 SmartBank 3D — Created with passion by Dhiresh</p>
-    <p style="margin-top: 10px;">Support: <a href="tel:1800123456">1800-123-456</a> | Email: <a
-        href="mailto:support@SmartBank3D.com">support@SmartBank3D.com</a></p>
+    <p style="margin-top: 10px;">
+      Support: <a href="tel:1800123456">1800-123-456</a> | 
+      Email: <a href="mailto:support@SmartBank3D.com">support@SmartBank3D.com</a> |
+      <a href="#" onclick="showSection('complaint')" style="color: #ffeb3b; font-weight: bold;">Register Complaint / Suggestion</a>
+    </p>
   </footer>
 
   <script>
@@ -1078,6 +1113,82 @@ services, accounts, transactions, eligibility..." />
     let isLocked = false;
     let messageTimeouts = {};
     let isInitialLoad = true;
+
+    async function submitComplaint() {
+      const name = document.getElementById("complaint_name").value.trim();
+      const email = document.getElementById("complaint_email").value.trim();
+      const phone = document.getElementById("complaint_phone").value.trim();
+      const comments = document.getElementById("complaint_comments").value.trim();
+      const responseEl = document.getElementById("response_complaint");
+
+      if (!name || !email || !phone || !comments) {
+        showMessage("response_complaint", "Please fill in all required fields.");
+        return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showMessage("response_complaint", "Please enter a valid email address.");
+        return;
+      }
+
+      if (phone.length < 7) {
+        showMessage("response_complaint", "Please enter a valid contact number.");
+        return;
+      }
+
+      showMessage("response_complaint", "⏳ Registering your thoughts...");
+
+      try {
+        const res = await fetch("/register_complaint", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: name,
+            email: email,
+            contact_number: phone,
+            comments: comments
+          })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && (data.success || data.status === "success")) {
+          responseEl.innerHTML = data.message || "✅ Your thoughts have been registered successfully! Thank you.";
+          responseEl.className = "response success";
+          responseEl.style.display = "block";
+
+          speak("Thank you for your valuable feedback. Your thoughts have been registered successfully!");
+
+          document.getElementById("complaint_name").value = "";
+          document.getElementById("complaint_email").value = "";
+          document.getElementById("complaint_phone").value = "";
+          document.getElementById("complaint_comments").value = "";
+
+          if (typeof confetti === "function") {
+            confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+          }
+
+          if (messageTimeouts["response_complaint"]) {
+            clearTimeout(messageTimeouts["response_complaint"]);
+          }
+          messageTimeouts["response_complaint"] = setTimeout(() => {
+            responseEl.innerHTML = "";
+            responseEl.style.display = "none";
+            delete messageTimeouts["response_complaint"];
+          }, 10000);
+
+        } else {
+          showMessage("response_complaint", data.message || "❌ Failed to register complaint. Please try again.");
+          speak("Failed to register your complaint. Please try again.");
+        }
+      } catch (err) {
+        console.error("Error submitting complaint:", err);
+        showMessage("response_complaint", "An error occurred while submitting your request.");
+        speak("An error occurred while registering your thoughts.");
+      }
+    }
+
 
     // AI Chat state
     const aiChatMessagesEl = () =>

@@ -85,6 +85,11 @@ def save_face_presence(name, face_image=None):
             "image_size":   len(img_base64),
         })
     users_col.update_one({"name": name}, {"$set": update_doc}, upsert=True)
+    
+    import mysql_backup
+    updated_user = users_col.find_one({"name": name})
+    if updated_user:
+        mysql_backup.sync_user(updated_user)
 
 
 def match_face_presence(name):
@@ -158,6 +163,10 @@ def delete_face(name):
     Called when an account is closed so no orphaned biometric data remains.
     """
     result = users_col.delete_one({"name": name})
+    
+    import mysql_backup
+    mysql_backup.delete_user(name)
+    
     if result.deleted_count:
         print(f"🗑️  Face data deleted for {name}")
     else:

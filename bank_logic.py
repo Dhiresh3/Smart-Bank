@@ -3,6 +3,7 @@ import random
 from datetime import datetime
 from pymongo import MongoClient
 from face_auth import delete_face
+import mysql_backup
 
 # MongoDB connection — uses MONGO_URI env var for deployment, falls back to localhost
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
@@ -30,6 +31,8 @@ def save_data(data):
     for acc_no, details in data.items():
         doc = {"acc_no": acc_no, **details}
         accounts_col.replace_one({"acc_no": acc_no}, doc, upsert=True)
+        mysql_backup.sync_account(doc)
+
 
 
 def generate_account_number():
@@ -60,6 +63,7 @@ def create_account(data):
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
     accounts_col.replace_one({"acc_no": acc_no}, doc, upsert=True)
+    mysql_backup.sync_account(doc)
     return {
         "status": "success",
         "message": f"Account created successfully for {data['name']}",
@@ -131,6 +135,9 @@ def deposit(data):
                 "$push": {"history": tx_entry}
             }
         )
+        updated_account = accounts_col.find_one({"acc_no": acc_no})
+        if updated_account:
+            mysql_backup.sync_account(updated_account)
         return {"status": "success", "message": f"₹{amount} deposited successfully"}
     return {"status": "fail", "message": "Invalid credentials"}
 
@@ -159,6 +166,9 @@ def withdraw(data):
                     "$push": {"history": tx_entry}
                 }
             )
+            updated_account = accounts_col.find_one({"acc_no": acc_no})
+            if updated_account:
+                mysql_backup.sync_account(updated_account)
             return {"status": "success", "message": f"₹{amount} withdrawn successfully"}
         return {"status": "fail", "message": "Insufficient balance"}
     return {"status": "fail", "message": "Invalid credentials"}
@@ -174,6 +184,9 @@ def check_balance(data):
             {"acc_no": acc_no},
             {"$push": {"history": "Checked balance"}}
         )
+        updated_account = accounts_col.find_one({"acc_no": acc_no})
+        if updated_account:
+            mysql_backup.sync_account(updated_account)
         return {
             "status": "success",
             "balance": balance,
@@ -192,5 +205,6 @@ def close_account(data):
         if name:
             delete_face(name)
         accounts_col.delete_one({"acc_no": acc_no})
+        mysql_backup.delete_account(acc_no)
         return {"status": "success", "message": f"Account {acc_no} closed successfully"}
     return {"status": "fail", "message": "Invalid credentials"}
