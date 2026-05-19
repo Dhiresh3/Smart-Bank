@@ -15,6 +15,8 @@ verification_failures_col = db["verification_failures"]
 complaints_col = db["complaints"]
 
 import mysql_backup
+import notification_service
+import random
 
 
 
@@ -36,7 +38,134 @@ app = Flask(__name__, static_folder="static")
 passbook_failed_attempts = {}
 
 # ── Allow camera/microphone on all responses (required for deployed HTTPS) ────
+@app.route("/apply_scheme", methods=["POST"])
+def apply_scheme():
+    data = request.json
+    name = data.get("name", "").strip()
+    email = data.get("email", "").strip()
+    phone = data.get("phone", "").strip()
+    amount = float(data.get("amount", 0))
+    tenure = float(data.get("tenure", 0))
+    scheme_type = data.get("type", "").strip()
+    opt_in = bool(data.get("opt_in", True))
+
+    if not name or amount <= 0 or tenure <= 0 or not scheme_type:
+        return jsonify({"status": "fail", "message": "❌ Invalid inputs provided."})
+
+    # Generate unique reference ID
+    ref_id = f"REF-{random.randint(100000, 999999)}"
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Format specialized messages
+    is_deposit = "fd" in scheme_type.lower() or "rd" in scheme_type.lower()
+    
+    if is_deposit:
+        # Fixed / Recurring Deposit calculation
+        rates = {"fd1": 6.5, "fd3": 7.0, "fd5": 7.5, "rd": 7.0}
+        rate = rates.get(scheme_type, 7.0)
+        r = rate / 100
+        maturity_amount = amount * ((1 + r) ** tenure)
+        maturity_year = datetime.now().year + int(tenure)
+        
+        msg_text = (
+            f"Dear {name}, your Fixed Deposit application has been received. "
+            f"Reference ID: {ref_id}. Amount: Rs {amount:,.2f} for {tenure} years. "
+            f"Maturity Amount: Rs {maturity_amount:,.2f} in Year {maturity_year}."
+        )
+    else:
+        # Loan Calculation (EMI formula)
+        rates = {"home": 8.4, "personal": 10.5, "car": 8.5, "gold": 10.0}
+        rate = rates.get(scheme_type, 8.5)
+        r = rate / 100
+        monthly_rate = r / 12
+        num_months = tenure * 12
+        if monthly_rate > 0:
+            emi = (amount * monthly_rate * ((1 + monthly_rate) ** num_months)) / (((1 + monthly_rate) ** num_months) - 1)
+        else:
+            emi = amount / num_months
+            
+        msg_text = (
+            f"Dear {name}, your {scheme_type.capitalize()} Loan application has been received. "
+            f"Reference ID: {ref_id}. Loan Amount: Rs {amount:,.2f} for {tenure} years. "
+            f"Expected Monthly EMI: Rs {emi:,.2f} for {num_months:.0f} months."
+        )
+
+    # Secure contact data logs (encrypt email and phone)
+    encrypted_email = notification_service.encrypt_contact(email)
+    encrypted_phone = notification_service.encrypt_contact(phone)
+
+    # Save application details to MongoDB
+    app_doc = {
+        "ref_id": ref_id,
+        "name": name,
+        "type": scheme_type,
+        "amount": amount,
+        "tenure": tenure,
+        "email": encrypted_email,
+        "phone": encrypted_phone,
+        "opt_in": opt_in,
+        "timestamp": timestamp
+    }
+    db["applications"].insert_one(app_doc)
+
+    # Sync to MySQL backup
+    mysql_backup.add_application(
+        ref_id, name, scheme_type, amount, tenure, encrypted_email, encrypted_phone, opt_in, timestamp
+    )
+
+    email_status = "Skipped"
+    sms_status = "Skipped"
+
+    # Send alerts if opt-in is checked
+    if opt_in:
+        if email:
+            subject = f"SmartBank - Application {ref_id} Submitted"
+            html_body = f"""
+            <h3>SmartBank 3D - Confirmation Alert</h3>
+            <p>{msg_text}</p>
+            <br>
+            <p style="font-size: 11px; color: gray;">To stop receiving notifications, please contact support.</p>
+            """
+            sent = notification_service.send_email(email, subject, html_body)
+            email_status = "Sent" if sent else "Failed"
+            
+            # Log transaction alerts to MongoDB & MySQL
+            log_doc = {
+                "ref_id": ref_id,
+                "recipient": encrypted_email,
+                "channel": "email",
+                "status": email_status,
+                "message": msg_text,
+                "timestamp": timestamp
+            }
+            db["notification_logs"].insert_one(log_doc)
+            mysql_backup.add_notification_log(ref_id, encrypted_email, "email", email_status, msg_text, timestamp)
+
+        if phone:
+            sent = notification_service.send_sms(phone, msg_text)
+            sms_status = "Sent" if sent else "Failed"
+            
+            log_doc = {
+                "ref_id": ref_id,
+                "recipient": encrypted_phone,
+                "channel": "sms",
+                "status": sms_status,
+                "message": msg_text,
+                "timestamp": timestamp
+            }
+            db["notification_logs"].insert_one(log_doc)
+            mysql_backup.add_notification_log(ref_id, encrypted_phone, "sms", sms_status, msg_text, timestamp)
+
+    return jsonify({
+        "status": "success",
+        "message": f"✅ Application submitted successfully! Ref ID: {ref_id}",
+        "ref_id": ref_id,
+        "email_status": email_status,
+        "sms_status": sms_status
+    })
+
 @app.after_request
+
 def set_permissions_policy(response):
     """
     Browsers block camera access unless the server explicitly allows it.

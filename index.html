@@ -736,7 +736,7 @@
   <div id="loanForm" class="modal">
     <div class="modal-content">
       <span class="close" onclick="closeModal()">&times;</span>
-      <h3 id="loanFormTitle">Loan Application</h3>
+      <h3 id="loanFormTitle">Application Form</h3>
       <div class="form-group">
         <label for="fullName">Full Name *</label>
         <input type="text" id="fullName" placeholder="Full Name" required>
@@ -750,23 +750,18 @@
         <input type="tel" id="phone" placeholder="Phone Number" required>
       </div>
       <div class="form-group">
-        <label for="loanAmount">Loan Amount (₹) *</label>
-        <input type="number" id="loanAmount" placeholder="Loan 
-Amount" required>
+        <label for="loanAmount" id="loanAmountLabel">Amount (₹) *</label>
+        <input type="number" id="loanAmount" placeholder="Enter Amount" required>
       </div>
       <div class="form-group">
-        <label for="loanTenure">Loan Tenure *</label>
-        <select id="loanTenure" required>
-          <option value="">Select Loan Tenure</option>
-          <option value="1">1 Year</option>
-          <option value="3">3 Years</option>
-          <option value="5">5 Years</option>
-          <option value="7">7 Years</option>
-          <option value="10">10 Years</option>
-        </select>
+        <label for="loanTenure" id="loanTenureLabel">Tenure (Years) *</label>
+        <input type="number" id="loanTenure" placeholder="Tenure in years" min="0.1" max="30" step="0.1" required>
       </div>
-      <button class="action" onclick="submitLoanApplication()">Submit
-        Application</button>
+      <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 15px;">
+        <input type="checkbox" id="loanOptIn" checked style="width: auto; margin: 0; cursor: pointer;">
+        <label for="loanOptIn" style="margin: 0; font-size: 14px; font-weight: normal; cursor: pointer;">Opt-in to receive email and SMS updates</label>
+      </div>
+      <button class="action" onclick="submitLoanApplication()" style="margin-top: 15px;">Submit Application</button>
       <div id="response_loan" class="response"></div>
     </div>
   </div>
@@ -1371,9 +1366,31 @@ message..." />
       }, LOCK_DURATION_MS);
     }
 
+    let currentSchemeType = "";
+
     function showLoanForm(loanType) {
-      document.getElementById('loanFormTitle').textContent =
-        loanType.charAt(0).toUpperCase() + loanType.slice(1) + ' Loan Application';
+      currentSchemeType = loanType;
+      const isDeposit = loanType.includes('fd') || loanType === 'rd';
+      const label = isDeposit ? 'Deposit' : 'Loan';
+      
+      let prettyType = loanType;
+      if (loanType === 'home') prettyType = 'Home Loan';
+      else if (loanType === 'personal') prettyType = 'Personal Loan';
+      else if (loanType === 'car') prettyType = 'Car Loan';
+      else if (loanType === 'gold') prettyType = 'Gold Loan';
+      else if (loanType === 'fd1') prettyType = '1 Year FD';
+      else if (loanType === 'fd3') prettyType = '3 Year FD';
+      else if (loanType === 'fd5') prettyType = '5 Year FD';
+      else if (loanType === 'rd') prettyType = 'Recurring Deposit';
+      
+      document.getElementById('loanFormTitle').textContent = prettyType + ' Application';
+      document.getElementById('loanAmountLabel').textContent = label + ' Amount (₹) *';
+      document.getElementById('loanTenureLabel').textContent = label + ' Tenure (Years) *';
+      
+      // Auto-populate values from calculator
+      document.getElementById('loanAmount').value = document.getElementById('calcLoanAmount').value || '';
+      document.getElementById('loanTenure').value = document.getElementById('calcTenure').value || '';
+      
       document.getElementById('loanForm').style.display = 'flex';
     }
 
@@ -1479,6 +1496,7 @@ message..." />
         resultHTML += `<p style="font-size: 16px; margin: 10px 0;"><strong>Tenure:</strong> ${tenure} years</p>`;
         resultHTML += `<p style="font-size: 18px; margin: 15px 0; color: #0097a7;"><strong>Compound Interest Earned:</strong> ₹${compoundInterest.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>`;
         resultHTML += `<p style="font-size: 20px; margin: 15px 0; color: #00bcd4; font-weight: bold;"><strong>Maturity Amount:</strong> ₹${totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>`;
+        resultHTML += `<button class="action" onclick="showLoanForm('${type}')" style="width: 100%; margin-top: 15px; background: linear-gradient(135deg, #00bcd4, #0097a7); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0, 188, 212, 0.3);">📝 Apply for this Deposit Now</button>`;
         resultHTML += `</div>`;
       } else {
         // Loan results
@@ -1489,6 +1507,7 @@ message..." />
         resultHTML += `<p style="font-size: 18px; margin: 15px 0; color: #0097a7;"><strong>Monthly EMI:</strong> ₹${emi.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>`;
         resultHTML += `<p style="font-size: 18px; margin: 15px 0; color: #ff6b6b;"><strong>Total Interest Payable:</strong> ₹${(totalRepayment - amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>`;
         resultHTML += `<p style="font-size: 20px; margin: 15px 0; color: #00bcd4; font-weight: bold;"><strong>Total Amount Payable:</strong> ₹${totalRepayment.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>`;
+        resultHTML += `<button class="action" onclick="showLoanForm('${type}')" style="width: 100%; margin-top: 15px; background: linear-gradient(135deg, #00bcd4, #0097a7); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0, 188, 212, 0.3);">📝 Apply for this Loan Now</button>`;
         resultHTML += `</div>`;
       }
 
@@ -1757,38 +1776,77 @@ message..." />
       }
     }
 
-    function submitLoanApplication() {
+    async function submitLoanApplication() {
       const name = document.getElementById('fullName').value.trim();
       const email = document.getElementById('email').value.trim();
       const phone = document.getElementById('phone').value.trim();
       const amount = document.getElementById('loanAmount').value.trim();
-      const tenure = document.getElementById('loanTenure').value;
+      const tenure = document.getElementById('loanTenure').value.trim();
+      const optIn = document.getElementById('loanOptIn').checked;
 
-      if (!name || !email || !phone || !amount || !tenure) {
-        showMessage('response_loan', 'Please fill in all required fields');
+      const responseEl = document.getElementById('response_loan');
+
+      if (!name || !amount || !tenure) {
+        responseEl.innerText = '❌ Please fill in all required fields (Name, Amount, Tenure).';
+        responseEl.style.display = 'block';
         return;
       }
-      let successMessage = 'Thank you for your application! We will contact you shortly.';
-      const loanType = document.getElementById('loanFormTitle').textContent.toLowerCase();
-      if (loanType.includes('car')) {
-        successMessage = 'Thank you for your car loan application! Our representative will contact you shortly with the next steps.';
-      } else if (loanType.includes('gold')) {
-        successMessage = 'Thank you for your gold loan application! Please visit your nearest branch with your gold for valuation.';
-      } else if (loanType.includes('home')) {
-        successMessage = 'Thank you for your home loan application! Our home loan specialist will contact you shortly.';
-      } else if (loanType.includes('personal')) {
-        successMessage = 'Thank you for your personal loan application! We will process your request and get back to you soon.';
+      if (!email && !phone) {
+        responseEl.innerText = '❌ Please provide either an Email Address or Phone Number.';
+        responseEl.style.display = 'block';
+        return;
       }
 
-      showMessage('response_loan', successMessage);
-      setTimeout(() => {
-        closeModal();
-      }, 2500);
-      document.getElementById('fullName').value = '';
-      document.getElementById('email').value = '';
-      document.getElementById('phone').value = '';
-      document.getElementById('loanAmount').value = '';
-      document.getElementById('loanTenure').value = '';
+      const submitButton = document.querySelector("#loanForm button.action");
+      submitButton.disabled = true;
+      submitButton.textContent = "Submitting Application...";
+
+      try {
+        const response = await fetch('/apply_scheme', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name,
+            email: email,
+            phone: phone,
+            amount: parseFloat(amount),
+            tenure: parseFloat(tenure),
+            type: currentSchemeType,
+            opt_in: optIn
+          })
+        });
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+          responseEl.innerText = result.message;
+          responseEl.style.display = 'block';
+          
+          if (typeof confetti === "function") {
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+          }
+          
+          setTimeout(() => {
+            closeModal();
+            // Clear fields
+            document.getElementById('fullName').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('phone').value = '';
+            document.getElementById('loanAmount').value = '';
+            document.getElementById('loanTenure').value = '';
+            responseEl.style.display = 'none';
+          }, 3000);
+        } else {
+          responseEl.innerText = result.message;
+          responseEl.style.display = 'block';
+        }
+      } catch (error) {
+        console.error("Error submitting application:", error);
+        responseEl.innerText = "❌ An error occurred. Please try again later.";
+        responseEl.style.display = 'block';
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = "Submit Application";
+      }
     }
     window.onclick = function (event) {
       const loanModal = document.getElementById('loanForm');

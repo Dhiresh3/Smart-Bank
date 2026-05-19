@@ -90,6 +90,30 @@ def init_db():
                     timestamp VARCHAR(255)
                 )
             """)
+            c.execute("""
+                CREATE TABLE IF NOT EXISTS applications (
+                    ref_id VARCHAR(255) PRIMARY KEY,
+                    name VARCHAR(255),
+                    type VARCHAR(255),
+                    amount DOUBLE,
+                    tenure DOUBLE,
+                    email VARCHAR(255),
+                    phone VARCHAR(255),
+                    opt_in TINYINT(1),
+                    timestamp VARCHAR(255)
+                )
+            """)
+            c.execute("""
+                CREATE TABLE IF NOT EXISTS notification_logs (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    ref_id VARCHAR(255),
+                    recipient VARCHAR(255),
+                    channel VARCHAR(50),
+                    status VARCHAR(50),
+                    message TEXT,
+                    timestamp VARCHAR(255)
+                )
+            """)
         conn.commit()
         print("✅ MySQL backup database initialized successfully.")
     except Exception as e:
@@ -289,9 +313,65 @@ def sync_all_mongo_to_sqlite():
                     doc.get("comments", ""), doc.get("timestamp", "")
                 ))
                 
+            # Sync Applications
+            c.execute("DELETE FROM applications")
+            for doc in db["applications"].find():
+                c.execute("""
+                    INSERT INTO applications (ref_id, name, type, amount, tenure, email, phone, opt_in, timestamp)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    doc.get("ref_id", ""), doc.get("name", ""), doc.get("type", ""),
+                    float(doc.get("amount", 0.0)), float(doc.get("tenure", 0.0)),
+                    doc.get("email", ""), doc.get("phone", ""),
+                    1 if doc.get("opt_in") else 0, doc.get("timestamp", "")
+                ))
+
+            # Sync Notification Logs
+            c.execute("DELETE FROM notification_logs")
+            for doc in db["notification_logs"].find():
+                c.execute("""
+                    INSERT INTO notification_logs (ref_id, recipient, channel, status, message, timestamp)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (
+                    doc.get("ref_id", ""), doc.get("recipient", ""), doc.get("channel", ""),
+                    doc.get("status", ""), doc.get("message", ""), doc.get("timestamp", "")
+                ))
+
         conn.commit()
         print("✅ Full MongoDB to MySQL sync completed successfully!")
     except Exception as e:
         print(f"⚠️ MySQL full sync error: {e}")
+    finally:
+        conn.close()
+
+def add_application(ref_id, name, app_type, amount, tenure, email, phone, opt_in, timestamp):
+    conn = get_connection()
+    if not conn:
+        return
+    try:
+        with conn.cursor() as c:
+            c.execute("""
+                INSERT INTO applications (ref_id, name, type, amount, tenure, email, phone, opt_in, timestamp)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (ref_id, name, app_type, float(amount), float(tenure), email, phone, 1 if opt_in else 0, timestamp))
+        conn.commit()
+    except Exception as e:
+        print(f"⚠️ MySQL add_application error: {e}")
+    finally:
+        conn.close()
+
+def add_notification_log(ref_id, recipient, channel, status, message, timestamp):
+    conn = get_connection()
+    if not conn:
+        return
+    try:
+        with conn.cursor() as c:
+            c.execute("""
+                INSERT INTO notification_logs (ref_id, recipient, channel, status, message, timestamp)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (ref_id, recipient, channel, status, message, timestamp))
+        conn.commit()
+    except Exception as e:
+        print(f"⚠️ MySQL add_notification_log error: {e}")
     finally:
         conn.close()
