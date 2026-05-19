@@ -1,23 +1,4 @@
-"""
-animal.py — 8-Layer CNN Animal Classifier (Built from Scratch)
-================================================================
-USAGE
------
-1.  Set DATA_DIR below to your dataset root (must contain train/ and test/ subfolders,
-    each organised as one subfolder per class, e.g. train/cat/, train/dog/ …)
-2.  Run: python animal.py --mode train
-3.  Predict: python animal.py --mode predict --image path/to/photo.jpg
 
-Architecture (8 learnable layers)
------------------------------------
-Conv1 → BN → ReLU → MaxPool
-Conv2 → BN → ReLU → MaxPool
-Conv3 → BN → ReLU
-Conv4 → BN → ReLU → MaxPool
-FC1   → BN → ReLU → Dropout
-FC2   → BN → ReLU → Dropout
-FC3   (output)
-"""
 import os
 import sys
 import argparse
@@ -45,17 +26,14 @@ TEST_DIR   = os.path.join(DATA_DIR, "test")
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "animal_cnn.pth")
 META_PATH  = os.path.join(os.path.dirname(__file__), "animal_classes.json")
 
-# Hyper-parameters
-IMG_SIZE    = 128        # resize all images to 128×128
+IMG_SIZE    = 128       
 BATCH_SIZE  = 32
 EPOCHS      = 30
 LR          = 1e-3
 WEIGHT_DECAY= 1e-4
 NUM_WORKERS = 2         
 
-# ─────────────────────────────────────────────
-#  🧠  8-LAYER CNN MODEL
-# ─────────────────────────────────────────────
+
 class AnimalCNN(nn.Module):
     """
     8 trainable layers:
@@ -98,7 +76,7 @@ class AnimalCNN(nn.Module):
             nn.MaxPool2d(2, 2),                            # 32→16
         )
 
-        self.global_avg_pool = nn.AdaptiveAvgPool2d((4, 4))  # fixed to 4×4
+        self.global_avg_pool = nn.AdaptiveAvgPool2d((4, 4)) 
 
         # ── Fully-Connected Block ──
         self.fc1 = nn.Sequential(                          # Layer 5
@@ -113,7 +91,7 @@ class AnimalCNN(nn.Module):
             nn.ReLU(inplace=True),
             nn.Dropout(0.4),
         )
-        self.fc3 = nn.Linear(256, num_classes)             # Layer 7 (output)
+        self.fc3 = nn.Linear(256, num_classes)             # Layer 7 
 
         self._init_weights()
 
@@ -133,16 +111,14 @@ class AnimalCNN(nn.Module):
         x = self.conv3(x)
         x = self.conv4(x)
         x = self.global_avg_pool(x)
-        x = x.view(x.size(0), -1)   # flatten
+        x = x.view(x.size(0), -1)   
         x = self.fc1(x)
         x = self.fc2(x)
         x = self.fc3(x)
         return x
 
 
-# ─────────────────────────────────────────────
-#  📦  DATA LOADING
-# ─────────────────────────────────────────────
+
 def get_transforms():
     train_tf = transforms.Compose([
         transforms.Resize((IMG_SIZE, IMG_SIZE)),
@@ -177,9 +153,6 @@ def get_loaders():
     return train_loader, test_loader, train_ds.classes
 
 
-# ─────────────────────────────────────────────
-#  🏋  TRAINING
-# ─────────────────────────────────────────────
 def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"\n🖥  Device: {device}")
@@ -188,7 +161,6 @@ def train():
     num_classes = len(classes)
     print(f"🐾  Classes ({num_classes}): {classes}\n")
 
-    # Save class names
     with open(META_PATH, "w") as f:
         json.dump(classes, f)
 
@@ -204,7 +176,6 @@ def train():
     best_acc  = 0.0
     start_epoch = 1
 
-    # ── Resume from checkpoint if available ──
     if os.path.exists(MODEL_PATH):
         print(f"🔄  Resuming from checkpoint: {MODEL_PATH}")
         checkpoint = torch.load(MODEL_PATH, map_location=device)
@@ -212,7 +183,6 @@ def train():
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         best_acc    = checkpoint.get("best_acc", 0.0)
         start_epoch = checkpoint.get("epoch", 0) + 1
-        # Fast-forward scheduler to correct state
         for _ in range(start_epoch - 1):
             scheduler.step()
         print(f"   ↳ Continuing from epoch {start_epoch} (best acc so far: {best_acc:.2f}%)\n")
@@ -240,7 +210,6 @@ def train():
         train_loss = running_loss / total
         train_acc  = 100.0 * correct / total
 
-        # ── Eval phase ──
         model.eval()
         val_loss, val_correct, val_total = 0.0, 0, 0
         with torch.no_grad():
@@ -268,7 +237,6 @@ def train():
               f"Test Loss: {test_loss:.4f} Acc: {test_acc:.2f}% | "
               f"⏱ {elapsed:.1f}s")
 
-        # Save best model
         if test_acc > best_acc:
             best_acc = test_acc
             torch.save({
@@ -303,14 +271,10 @@ def _plot_history(history):
     plt.show()
 
 
-# ─────────────────────────────────────────────
-#  🔍  PREDICTION
-# ─────────────────────────────────────────────
-
 # Minimum confidence required to accept a prediction as a known animal.
 # If top-1 confidence is BELOW this value the image is rejected as
 # "not a known animal from the dataset".
-CONFIDENCE_THRESHOLD = 60.0   # percent (0-100)
+CONFIDENCE_THRESHOLD = 60.0  
 
 def predict(image_path: str):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -343,7 +307,6 @@ def predict(image_path: str):
     pred_class = top5_names[0]
     confidence = top5_probs[0] * 100
 
-    # ── Out-of-distribution check ──────────────────────────────────────
     if confidence < CONFIDENCE_THRESHOLD:
         print("\n⚠️  UNKNOWN IMAGE")
         print("─" * 40)
@@ -353,7 +316,6 @@ def predict(image_path: str):
         print("   " + ", ".join(classes))
         _show_unknown(img, classes, confidence)
         return None, confidence
-    # ───────────────────────────────────────────────────────────────────
 
     print(f"\n🐾  Prediction: {pred_class.upper()}  ({confidence:.1f}% confidence)")
     print("─" * 40)
@@ -400,7 +362,6 @@ def _show_unknown(img, classes, best_confidence):
         fontsize=11, fontweight="bold", color="#e74c3c"
     )
 
-    # Show the supported classes as a neat list
     ax2.axis("off")
     ax2.set_title("Supported Animal Classes", fontsize=13, fontweight="bold")
     text = "\n".join(f"  🐾  {c}" for c in sorted(classes))
@@ -419,9 +380,7 @@ def _show_unknown(img, classes, best_confidence):
     plt.show()
 
 
-# ─────────────────────────────────────────────
-#  🚀  ENTRY POINT
-# ─────────────────────────────────────────────
+
 def main():
     parser = argparse.ArgumentParser(description="Animal CNN Classifier (from scratch)")
     parser.add_argument("--mode",  choices=["train", "predict"], required=True,

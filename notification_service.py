@@ -5,17 +5,13 @@ from email.mime.multipart import MIMEMultipart
 from twilio.rest import Client
 from cryptography.fernet import Fernet
 
-# Fernet contact data encryption setup
-# Use a static fallback key if ENCRYPTION_KEY environment variable is not defined
 ENCRYPTION_KEY = os.environ.get("ENCRYPTION_KEY")
 if not ENCRYPTION_KEY:
-    # Safe static key for local testing
     ENCRYPTION_KEY = "k1c1Q1pZLXp1b0V4Y21zYWZla2V5MTIzNDU2Nzg5MDE="
     
 try:
     cipher_suite = Fernet(ENCRYPTION_KEY.encode())
 except Exception:
-    # If the key provided is invalid, generate a temporary valid one for this runtime session
     cipher_suite = Fernet(Fernet.generate_key())
 
 def encrypt_contact(data: str) -> str:

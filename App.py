@@ -1,9 +1,4 @@
-"""
-app.py — Flask Web Server for Animal CNN Classifier
-=====================================================
-Serves a beautiful frontend where users can upload images
-or provide file paths for animal predictions.
-"""
+
 
 import os
 import json
@@ -16,7 +11,6 @@ from torchvision import transforms
 from PIL import Image
 from flask import Flask, render_template, request, jsonify, send_from_directory
 
-# ── Import the CNN model class from animal.py ──
 from animal import AnimalCNN, META_PATH, MODEL_PATH, IMG_SIZE
 
 app = Flask(__name__)
@@ -37,9 +31,8 @@ checkpoint = torch.load(MODEL_PATH, map_location=device)
 model = AnimalCNN(len(classes)).to(device)
 model.load_state_dict(checkpoint["model_state_dict"])
 model.eval()
-print(f"✅ Model loaded — {len(classes)} classes, best acc: {checkpoint.get('best_acc', 0):.2f}%")
+print(f"[OK] Model loaded - {len(classes)} classes, best acc: {checkpoint.get('best_acc', 0):.2f}%")
 
-# ── Transform pipeline (same as prediction in animal.py) ──
 val_transform = transforms.Compose([
     transforms.Resize((IMG_SIZE, IMG_SIZE)),
     transforms.ToTensor(),
@@ -52,8 +45,7 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-# Minimum confidence threshold — below this we consider the image "unknown"
-CONFIDENCE_THRESHOLD = 60.0  # percent
+CONFIDENCE_THRESHOLD = 60.0  
 
 
 def predict_image(image_path):
@@ -87,7 +79,6 @@ def predict_image(image_path):
     return results
 
 
-# ── ROUTES ──
 @app.route("/")
 def index():
     return render_template("index.html", classes=classes)
@@ -137,13 +128,12 @@ def predict():
             "image_url": image_url,
         })
     except ValueError as e:
-      
         return jsonify({"error": str(e), "unknown_image": True}), 422
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
-    print("\n🌐  Starting Animal Classifier Web App...")
+    print("\n[STARTING] Animal Classifier Web App...")
     print("   Open http://127.0.0.1:5000 in your browser\n")
     app.run(debug=False, host="127.0.0.1", port=5000)

@@ -1,21 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="AI-powered animal classifier — upload any animal photo and get instant predictions using a custom-trained CNN neural network.">
+    <meta name="description"
+        content="AI-powered animal classifier — upload any animal photo and get instant predictions using a custom-trained CNN neural network.">
     <title>🐾 WildLens AI — Animal Classifier</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
 
-    <!-- Animated Forest Background -->
     <div class="forest-bg"></div>
     <div class="forest-overlay"></div>
 
-    <!-- Floating Fireflies -->
     <div class="fireflies">
         <div class="firefly"></div>
         <div class="firefly"></div>
@@ -34,10 +36,10 @@
         <div class="firefly"></div>
     </div>
 
-    <!-- Main Container -->
+
     <div class="app-container">
 
-        <!-- Header -->
+
         <header class="app-header">
             <div class="logo-section">
                 <span class="logo-icon">🐾</span>
@@ -51,14 +53,13 @@
             </div>
         </header>
 
-        <!-- Main Content Grid -->
+
         <main class="main-grid">
 
-            <!-- Left: Upload Panel -->
+
             <section class="upload-panel glass-card" id="upload-section">
                 <h2>📸 Upload Image</h2>
 
-                <!-- Drag & Drop Zone -->
                 <div class="drop-zone" id="drop-zone">
                     <div class="drop-zone-content" id="drop-zone-content">
                         <div class="upload-icon">🖼️</div>
@@ -70,19 +71,18 @@
                     <input type="file" id="file-input" accept="image/*" hidden>
                 </div>
 
-                <!-- OR separator -->
+
                 <div class="separator">
                     <span>OR</span>
                 </div>
 
-                <!-- File Path Input -->
+
                 <div class="path-input-group">
                     <label for="filepath-input">📁 Enter file path</label>
-                    <input type="text" id="filepath-input"
-                           placeholder='C:\Users\...\photo.jpg'>
+                    <input type="text" id="filepath-input" placeholder='C:\Users\...\photo.jpg'>
                 </div>
 
-                <!-- Predict Button -->
+
                 <button class="predict-btn" id="predict-btn" disabled>
                     <span class="btn-icon">🔍</span>
                     <span class="btn-text">Identify Animal</span>
@@ -91,14 +91,11 @@
                     </span>
                 </button>
 
-                <!-- Clear Button -->
                 <button class="clear-btn hidden" id="clear-btn">✕ Clear & Try Another</button>
             </section>
 
-            <!-- Right: Results Panel -->
             <section class="results-panel glass-card hidden" id="results-section">
 
-                <!-- Top Prediction -->
                 <div class="top-prediction" id="top-prediction">
                     <div class="prediction-header">
                         <h2>🎯 Prediction</h2>
@@ -107,20 +104,20 @@
                         <span class="animal-name" id="animal-name">—</span>
                         <div class="confidence-ring" id="confidence-ring">
                             <svg viewBox="0 0 100 100">
-                                <circle class="ring-bg" cx="50" cy="50" r="45"/>
-                                <circle class="ring-fill" id="ring-fill" cx="50" cy="50" r="45"
-                                        stroke-dasharray="283" stroke-dashoffset="283"/>
+                                <circle class="ring-bg" cx="50" cy="50" r="45" />
+                                <circle class="ring-fill" id="ring-fill" cx="50" cy="50" r="45" stroke-dasharray="283"
+                                    stroke-dashoffset="283" />
                             </svg>
                             <span class="ring-text" id="ring-text">0%</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Chart Section -->
+
                 <div class="chart-section">
                     <h3>📊 Top 5 Predictions</h3>
                     <div class="chart-container" id="chart-container">
-                        <!-- Bars injected by JS -->
+
                     </div>
                 </div>
 
@@ -128,7 +125,7 @@
                 <div class="full-results">
                     <h3>📋 All Classes</h3>
                     <div class="results-grid" id="results-grid">
-                        <!-- All class cards injected by JS -->
+
                     </div>
                 </div>
 
@@ -136,7 +133,7 @@
 
         </main>
 
-        <!-- Footer -->
+
         <footer class="app-footer">
             <p>Built from scratch — No pre-trained models used • PyTorch CNN • 8 Layers</p>
         </footer>
@@ -145,4 +142,5 @@
 
     <script src="/static/script.js"></script>
 </body>
+
 </html>

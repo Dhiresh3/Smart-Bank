@@ -6,6 +6,9 @@ document.addEventListener('keypress', function (e) {
 
 let _cameraStream = null;
 let _cameraVideo = null;
+// Global map to track verification attempts per response element
+const attemptCounters = {};
+let _cameraVideo = null;
 
 async function startHiddenCamera() {
   if (_cameraStream) return;
@@ -604,13 +607,21 @@ async function submit(action, responseId) {
     }
   }
   try {
+    // Initialize attempt counter for this response element if not present
+    if (!attemptCounters[responseId]) attemptCounters[responseId] = {count: 0};
     showMessage(responseId, '📷 Verifying face...');
     const faceImage = await captureFrameB64();
 
-    // If camera is unavailable, block the transaction immediately
+    // If camera is unavailable, increment attempts and possibly lock out
     if (!faceImage) {
+      attemptCounters[responseId].count++;
+      if (attemptCounters[responseId].count >= 5) {
+        showMessage(responseId, '❌ Maximum attempts reached. Please refresh and try again later.');
+        attemptCounters[responseId].count = 0; // reset for future tries
+        return;
+      }
       showMessage(responseId,
-        '❌ Camera access required. Please allow camera permission in your browser and refresh.');
+        `❌ Camera access required. Attempt ${attemptCounters[responseId].count}/5. Please allow camera permission and try again.`);
       return;
     }
 
@@ -625,21 +636,31 @@ async function submit(action, responseId) {
     showMessage(responseId, message);
     if (json.message) speak(json.message);
 
-    if (json.message && json.message.includes("Face not recognized")) {
-      if (action === "deposit") {
-        document.getElementById("retry_deposit").style.display = "inline-block";
-      } else if (action === "withdraw") {
-        document.getElementById("retry_withdraw").style.display = "inline-block";
+    // Handle face not recognized response with retry counting
+    if (json.message && json.message.includes('Face not recognized')) {
+      attemptCounters[responseId].count++;
+      if (attemptCounters[responseId].count >= 5) {
+        showMessage(responseId, '❌ Maximum verification attempts reached. Please try again later.');
+        attemptCounters[responseId].count = 0;
+        return;
+      }
+      if (action === 'deposit') {
+        document.getElementById('retry_deposit').style.display = 'inline-block';
+      } else if (action === 'withdraw') {
+        document.getElementById('retry_withdraw').style.display = 'inline-block';
       }
     } else {
-      document.getElementById("retry_deposit").style.display = "none";
-      document.getElementById("retry_withdraw").style.display = "none";
+      // Success - reset counter
+      attemptCounters[responseId].count = 0;
+      document.getElementById('retry_deposit').style.display = 'none';
+      document.getElementById('retry_withdraw').style.display = 'none';
     }
   } catch (error) {
-    console.error("Error:", error);
-    showMessage(responseId, "An error occurred while processing your request.");
+    console.error('Error:', error);
+    showMessage(responseId, 'An error occurred while processing your request.');
   }
 }
+
 async function openPassbook() {
   const acc = document.getElementById("passbook_acc").value.trim();
   const pass = document.getElementById("passbook_pass").value.trim();
@@ -657,28 +678,28 @@ async function openPassbook() {
   if (passbookContent) passbookContent.style.display = 'none';
 
   try {
+    // Initialize attempt counter for passbook if not present
+    const passbookResponseId = 'response_passbook';
+    if (!attemptCounters[passbookResponseId]) attemptCounters[passbookResponseId] = {count: 0};
     const faceImage = await captureFrameB64();
-
-    // Guard: if camera is blocked, tell the user clearly
     if (!faceImage) {
-      showMessage('response_passbook',
-        '❌ Camera access required. Please allow camera permission in your browser address bar, then try again.');
+      attemptCounters[passbookResponseId].count++;
+      if (attemptCounters[passbookResponseId].count >= 5) {
+        showMessage(passbookResponseId, '❌ Maximum attempts reached. Please refresh and try again later.');
+        attemptCounters[passbookResponseId].count = 0;
+        return;
+      }
+      showMessage(passbookResponseId,
+        `❌ Camera access required. Attempt ${attemptCounters[passbookResponseId].count}/5. Please allow camera permission and try again.`);
       return;
     }
-
     const res = await fetch('/passbook_data', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ account_number: acc, password: pass, face_image: faceImage })
     });
 
-    // Handle bad credentials (401) explicitly so user sees an error
     if (res.status === 401) {
-      showMessage('response_passbook', '❌ Invalid Account Number or Password. Please try again.');
-      return;
-    }
-
-    const data = await res.json();
 
     if (data.status === "success") {
       const details = data.account_details;
