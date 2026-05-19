@@ -580,6 +580,14 @@
     <button onclick="showSection('history')">History</button>
     <button onclick="showSection('close')">Close Account</button>
     <button onclick="showSection('support')">💬 Customer Support</button>
+    
+    <!-- Hamburger Menu Container -->
+    <div class="hamburger-menu" style="position: relative; display: inline-block;">
+      <button onclick="toggleMenu(event)" style="font-size: 20px; background: transparent; color: white; padding: 10px; min-width: auto; box-shadow: none;">☰</button>
+      <div id="dropdownMenu" style="display: none; position: absolute; right: 0; top: 100%; background: white; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); padding: 10px; z-index: 1000; min-width: 120px;">
+        <button onclick="signOut()" style="background: #ff4757; color: white; width: 100%; text-align: center; border: none; padding: 10px; border-radius: 5px; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);">Sign Out</button>
+      </div>
+    </div>
   </div>
   <div class="section active" id="home">
     <h2> 🏛️ Welcome to Skiller SmartBank </h2>
@@ -1388,6 +1396,26 @@ message..." />
         }
       }
     }
+
+    function toggleMenu(event) {
+      event.stopPropagation();
+      const menu = document.getElementById("dropdownMenu");
+      menu.style.display = menu.style.display === "block" ? "none" : "block";
+    }
+
+    function signOut() {
+      // Directs the user back to the login page
+      window.location.href = "/login.html";
+    }
+
+    // Close dropdown menu if user clicks outside of it
+    document.addEventListener("click", function(event) {
+      const menu = document.getElementById("dropdownMenu");
+      const hamburger = document.querySelector(".hamburger-menu");
+      if (menu && hamburger && !hamburger.contains(event.target)) {
+        menu.style.display = "none";
+      }
+    });
 
     function calculateLoanDetails() {
       const type = document.getElementById('loanSchemeType').value;
