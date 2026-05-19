@@ -5,8 +5,8 @@ from pymongo import MongoClient
 
 # MySQL connection settings
 MYSQL_HOST = os.environ.get("MYSQL_HOST", "localhost")
-MYSQL_USER = os.environ.get("MYSQL_USER", "root")
-MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "")
+MYSQL_USER = os.environ.get("MYSQL_USER", "system")
+MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "root")
 MYSQL_DB = os.environ.get("MYSQL_DB", "smartbank_backup")
 
 # MongoDB connection settings (for full sync)
