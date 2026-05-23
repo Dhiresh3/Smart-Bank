@@ -111,6 +111,7 @@ def init_db():
                     channel VARCHAR(50),
                     status VARCHAR(50),
                     message TEXT,
+                    html_body LONGTEXT,
                     timestamp VARCHAR(255)
                 )
             """)
@@ -330,11 +331,12 @@ def sync_all_mongo_to_sqlite():
             c.execute("DELETE FROM notification_logs")
             for doc in db["notification_logs"].find():
                 c.execute("""
-                    INSERT INTO notification_logs (ref_id, recipient, channel, status, message, timestamp)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    INSERT INTO notification_logs (ref_id, recipient, channel, status, message, html_body, timestamp)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """, (
                     doc.get("ref_id", ""), doc.get("recipient", ""), doc.get("channel", ""),
-                    doc.get("status", ""), doc.get("message", ""), doc.get("timestamp", "")
+                    doc.get("status", ""), doc.get("message", ""), doc.get("html_body", ""),
+                    doc.get("timestamp", "")
                 ))
 
         conn.commit()
@@ -360,16 +362,16 @@ def add_application(ref_id, name, app_type, amount, tenure, email, phone, opt_in
     finally:
         conn.close()
 
-def add_notification_log(ref_id, recipient, channel, status, message, timestamp):
+def add_notification_log(ref_id, recipient, channel, status, message, timestamp, html_body=""):
     conn = get_connection()
     if not conn:
         return
     try:
         with conn.cursor() as c:
             c.execute("""
-                INSERT INTO notification_logs (ref_id, recipient, channel, status, message, timestamp)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (ref_id, recipient, channel, status, message, timestamp))
+                INSERT INTO notification_logs (ref_id, recipient, channel, status, message, html_body, timestamp)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (ref_id, recipient, channel, status, message, html_body, timestamp))
         conn.commit()
     except Exception as e:
         print(f"⚠️ MySQL add_notification_log error: {e}")

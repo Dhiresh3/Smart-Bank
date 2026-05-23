@@ -315,6 +315,7 @@ def send_confirmation_notification(
         "email_status": email_status,
         "sms_status": sms_status,
         "msg_text": msg_text,
+        "html_body": html_body,
         "fallback_logged": fallback_logged
     }
 

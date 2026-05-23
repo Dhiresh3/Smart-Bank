@@ -130,6 +130,7 @@ def apply_scheme():
         sms_status = notif_result["sms_status"]
         fallback_logged = notif_result["fallback_logged"]
         msg_text = notif_result["msg_text"]
+        html_body = notif_result["html_body"]
 
         # ── Log notification attempts to MongoDB & MySQL ─────────────────
         if email:
@@ -139,11 +140,13 @@ def apply_scheme():
                 "channel": "email",
                 "status": email_status,
                 "message": msg_text,
+                "html_body": html_body,
                 "timestamp": timestamp
             }
             db["notification_logs"].insert_one(log_doc)
             mysql_backup.add_notification_log(
-                ref_id, encrypted_email, "email", email_status, msg_text, timestamp
+                ref_id, encrypted_email, "email", email_status, msg_text, timestamp,
+                html_body=html_body
             )
 
         if phone:
@@ -153,11 +156,13 @@ def apply_scheme():
                 "channel": "sms",
                 "status": sms_status,
                 "message": msg_text,
+                "html_body": "",
                 "timestamp": timestamp
             }
             db["notification_logs"].insert_one(log_doc)
             mysql_backup.add_notification_log(
-                ref_id, encrypted_phone, "sms", sms_status, msg_text, timestamp
+                ref_id, encrypted_phone, "sms", sms_status, msg_text, timestamp,
+                html_body=""
             )
 
         # ── Fallback: persist failed delivery for manual follow-up ───────
