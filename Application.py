@@ -40,6 +40,12 @@ passbook_failed_attempts = {}
 # ── Allow camera/microphone on all responses (required for deployed HTTPS) ────
 @app.route("/apply_scheme", methods=["POST"])
 def apply_scheme():
+    """Process loan/scheme applications and dispatch confirmation notifications.
+
+    Captures contact details (phone/email), generates a reference ID,
+    calculates financial details (EMI or maturity), persists to MongoDB
+    and MySQL, then immediately triggers confirmation via SMS and/or email.
+    """
     data = request.json
     name = data.get("name", "").strip()
     email = data.get("email", "").strip()
@@ -52,49 +58,36 @@ def apply_scheme():
     if not name or amount <= 0 or tenure <= 0 or not scheme_type:
         return jsonify({"status": "fail", "message": "❌ Invalid inputs provided."})
 
-    # Generate unique reference ID
+    # ── Generate unique reference ID ─────────────────────────────────────
     ref_id = f"REF-{random.randint(100000, 999999)}"
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Format specialized messages
+    # ── Financial calculations ───────────────────────────────────────────
     is_deposit = "fd" in scheme_type.lower() or "rd" in scheme_type.lower()
-    
+    emi = 0
+    maturity_amount = 0
+
     if is_deposit:
-        # Fixed / Recurring Deposit calculation
         rates = {"fd1": 6.5, "fd3": 7.0, "fd5": 7.5, "rd": 7.0}
-        rate = rates.get(scheme_type, 7.0)
-        r = rate / 100
-        maturity_amount = amount * ((1 + r) ** tenure)
-        maturity_year = datetime.now().year + int(tenure)
-        
-        msg_text = (
-            f"Dear {name}, your Fixed Deposit application has been received. "
-            f"Reference ID: {ref_id}. Amount: Rs {amount:,.2f} for {tenure} years. "
-            f"Maturity Amount: Rs {maturity_amount:,.2f} in Year {maturity_year}."
-        )
+        rate = rates.get(scheme_type, 7.0) / 100
+        maturity_amount = amount * ((1 + rate) ** tenure)
     else:
-        # Loan Calculation (EMI formula)
         rates = {"home": 8.4, "personal": 10.5, "car": 8.5, "gold": 10.0}
-        rate = rates.get(scheme_type, 8.5)
-        r = rate / 100
-        monthly_rate = r / 12
+        rate = rates.get(scheme_type, 8.5) / 100
+        monthly_rate = rate / 12
         num_months = tenure * 12
         if monthly_rate > 0:
-            emi = (amount * monthly_rate * ((1 + monthly_rate) ** num_months)) / (((1 + monthly_rate) ** num_months) - 1)
+            emi = (amount * monthly_rate * ((1 + monthly_rate) ** num_months)) / (
+                ((1 + monthly_rate) ** num_months) - 1
+            )
         else:
             emi = amount / num_months
-            
-        msg_text = (
-            f"Dear {name}, your {scheme_type.capitalize()} Loan application has been received. "
-            f"Reference ID: {ref_id}. Loan Amount: Rs {amount:,.2f} for {tenure} years. "
-            f"Expected Monthly EMI: Rs {emi:,.2f} for {num_months:.0f} months."
-        )
 
-    # Secure contact data logs (encrypt email and phone)
+    # ── Encrypt contact data before storage ──────────────────────────────
     encrypted_email = notification_service.encrypt_contact(email)
     encrypted_phone = notification_service.encrypt_contact(phone)
 
-    # Save application details to MongoDB
+    # ── Persist application to MongoDB ───────────────────────────────────
     app_doc = {
         "ref_id": ref_id,
         "name": name,
@@ -108,28 +101,38 @@ def apply_scheme():
     }
     db["applications"].insert_one(app_doc)
 
-    # Sync to MySQL backup
+    # ── Sync to MySQL backup ────────────────────────────────────────────
     mysql_backup.add_application(
-        ref_id, name, scheme_type, amount, tenure, encrypted_email, encrypted_phone, opt_in, timestamp
+        ref_id, name, scheme_type, amount, tenure,
+        encrypted_email, encrypted_phone, opt_in, timestamp
     )
 
+    # ── Dispatch confirmation notifications immediately ──────────────────
     email_status = "Skipped"
     sms_status = "Skipped"
+    fallback_logged = False
 
-    # Send alerts if opt-in is checked
     if opt_in:
+        # Use the unified notification dispatcher
+        notif_result = notification_service.send_confirmation_notification(
+            name=name,
+            email=email,
+            phone=phone,
+            app_type=scheme_type,
+            amount=amount,
+            ref_id=ref_id,
+            tenure=tenure,
+            emi=emi,
+            maturity_amount=maturity_amount,
+            is_deposit=is_deposit
+        )
+        email_status = notif_result["email_status"]
+        sms_status = notif_result["sms_status"]
+        fallback_logged = notif_result["fallback_logged"]
+        msg_text = notif_result["msg_text"]
+
+        # ── Log notification attempts to MongoDB & MySQL ─────────────────
         if email:
-            subject = f"SmartBank - Application {ref_id} Submitted"
-            html_body = f"""
-            <h3>SmartBank 3D - Confirmation Alert</h3>
-            <p>{msg_text}</p>
-            <br>
-            <p style="font-size: 11px; color: gray;">To stop receiving notifications, please contact support.</p>
-            """
-            sent = notification_service.send_email(email, subject, html_body)
-            email_status = "Sent" if sent else "Failed"
-            
-            # Log transaction alerts to MongoDB & MySQL
             log_doc = {
                 "ref_id": ref_id,
                 "recipient": encrypted_email,
@@ -139,12 +142,11 @@ def apply_scheme():
                 "timestamp": timestamp
             }
             db["notification_logs"].insert_one(log_doc)
-            mysql_backup.add_notification_log(ref_id, encrypted_email, "email", email_status, msg_text, timestamp)
+            mysql_backup.add_notification_log(
+                ref_id, encrypted_email, "email", email_status, msg_text, timestamp
+            )
 
         if phone:
-            sent = notification_service.send_sms(phone, msg_text)
-            sms_status = "Sent" if sent else "Failed"
-            
             log_doc = {
                 "ref_id": ref_id,
                 "recipient": encrypted_phone,
@@ -154,14 +156,30 @@ def apply_scheme():
                 "timestamp": timestamp
             }
             db["notification_logs"].insert_one(log_doc)
-            mysql_backup.add_notification_log(ref_id, encrypted_phone, "sms", sms_status, msg_text, timestamp)
+            mysql_backup.add_notification_log(
+                ref_id, encrypted_phone, "sms", sms_status, msg_text, timestamp
+            )
+
+        # ── Fallback: persist failed delivery for manual follow-up ───────
+        if fallback_logged:
+            db["notification_fallbacks"].insert_one({
+                "ref_id": ref_id,
+                "name": name,
+                "type": scheme_type,
+                "amount": amount,
+                "email_status": email_status,
+                "sms_status": sms_status,
+                "requires_manual_followup": True,
+                "timestamp": timestamp
+            })
 
     return jsonify({
         "status": "success",
         "message": f"✅ Application submitted successfully! Ref ID: {ref_id}",
         "ref_id": ref_id,
         "email_status": email_status,
-        "sms_status": sms_status
+        "sms_status": sms_status,
+        "fallback_logged": fallback_logged
     })
 
 @app.after_request

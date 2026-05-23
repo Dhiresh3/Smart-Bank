@@ -1818,11 +1818,49 @@ message..." />
         const result = await response.json();
         
         if (result.status === 'success') {
-          responseEl.innerText = result.message;
+          // Build rich confirmation card with notification status
+          const emailBadge = result.email_status === 'Sent'
+            ? '<span style="background:#4caf50;color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;">📧 Email Sent</span>'
+            : result.email_status === 'Failed'
+              ? '<span style="background:#f44336;color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;">📧 Email Failed</span>'
+              : '<span style="background:#9e9e9e;color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;">📧 Email Skipped</span>';
+          
+          const smsBadge = result.sms_status === 'Sent'
+            ? '<span style="background:#4caf50;color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;">💬 SMS Sent</span>'
+            : result.sms_status === 'Failed'
+              ? '<span style="background:#f44336;color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;">💬 SMS Failed</span>'
+              : '<span style="background:#9e9e9e;color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;">💬 SMS Skipped</span>';
+
+          let fallbackNotice = '';
+          if (result.fallback_logged) {
+            fallbackNotice = `
+              <div style="background:#fff3e0;border-left:4px solid #ff9800;padding:10px 15px;border-radius:4px;margin-top:12px;">
+                <strong style="color:#e65100;">⚠️ Delivery Issue:</strong>
+                <span style="color:#555;font-size:13px;">Both email and SMS delivery failed. Our team has been notified and will contact you manually.</span>
+              </div>`;
+          }
+
+          responseEl.innerHTML = `
+            <div style="text-align:center;">
+              <div style="font-size:40px;margin-bottom:8px;">🎉</div>
+              <h4 style="color:#0097a7;margin:5px 0;">Application Submitted!</h4>
+              <p style="color:#333;font-size:15px;margin:5px 0;">Reference ID: <strong style="color:#d32f2f;font-size:17px;">${result.ref_id}</strong></p>
+              <div style="margin:12px 0;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+                ${emailBadge} ${smsBadge}
+              </div>
+              <p style="color:#777;font-size:12px;margin:8px 0 0;">A confirmation has been dispatched to your provided contact details.</p>
+              ${fallbackNotice}
+            </div>`;
+          responseEl.className = 'response success';
           responseEl.style.display = 'block';
           
           if (typeof confetti === "function") {
             confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+          }
+
+          // Speak confirmation
+          if (typeof speak === "function") {
+            speak(`Application submitted successfully. Reference ID: ${result.ref_id}`);
           }
           
           setTimeout(() => {
@@ -1834,7 +1872,8 @@ message..." />
             document.getElementById('loanAmount').value = '';
             document.getElementById('loanTenure').value = '';
             responseEl.style.display = 'none';
-          }, 3000);
+            responseEl.className = 'response';
+          }, 5000);
         } else {
           responseEl.innerText = result.message;
           responseEl.style.display = 'block';
