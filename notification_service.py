@@ -11,10 +11,8 @@ Fallback:  If SMS/email services are unavailable, failures are logged and
 """
 
 import os
-import smtplib
+import requests
 import logging
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from twilio.rest import Client
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
@@ -64,11 +62,9 @@ TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
 TWILIO_PHONE_NUMBER = os.environ.get("TWILIO_PHONE_NUMBER", "")
 
-# ── SMTP Email credentials ──────────────────────────────────────────────────
-SMTP_SERVER = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
-SMTP_PORT = int(os.environ.get("SMTP_PORT", 587))
-SMTP_USER = os.environ.get("SMTP_USER", "")
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+# ── Email API credentials ──────────────────────────────────────────────────
+EMAIL_API_KEY = os.environ.get("EMAIL_API_KEY", "")
+SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "")  # e.g., the email you verified on Brevo
 
 
 def send_sms(to_number: str, message: str) -> bool:
@@ -95,35 +91,40 @@ def send_sms(to_number: str, message: str) -> bool:
 
 
 def send_email(to_email: str, subject: str, html_body: str) -> bool:
-    """Dispatches email alerts via SMTP.
+    """Dispatches email alerts via Brevo HTTP API.
 
     Returns True on success, False if credentials are missing or transmission fails.
     Failures are logged but never raise — the caller receives a boolean status.
     """
-    if not SMTP_USER or not SMTP_PASSWORD:
-        logger.warning("SMTP credentials not configured. Skipping email transmission.")
+    if not EMAIL_API_KEY or not SENDER_EMAIL:
+        logger.warning("Email API credentials not configured. Skipping email transmission.")
         return False
     try:
-        msg = MIMEMultipart()
-        msg['From'] = SMTP_USER
-        msg['To'] = to_email
-        msg['Subject'] = subject
-        msg.attach(MIMEText(html_body, 'html'))
-
-        timeout = 10  # fail fast if Render blocks outbound SMTP
-        if SMTP_PORT == 465:
-            server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, timeout=timeout)
+        url = "https://api.brevo.com/v3/smtp/email"
+        headers = {
+            "accept": "application/json",
+            "api-key": EMAIL_API_KEY,
+            "content-type": "application/json"
+        }
+        payload = {
+            "sender": {"name": "SmartBank", "email": SENDER_EMAIL},
+            "to": [{"email": to_email}],
+            "subject": subject,
+            "htmlContent": html_body
+        }
+        
+        # Use a 10-second timeout for the HTTP request to prevent hangs
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        
+        if response.status_code in [200, 201, 202]:
+            logger.info(f"📧 Email sent successfully to {to_email} via Brevo API")
+            return True
         else:
-            server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=timeout)
-            server.starttls()
+            logger.error(f"Email API rejected the request: {response.status_code} - {response.text}")
+            return False
             
-        server.login(SMTP_USER, SMTP_PASSWORD)
-        server.sendmail(SMTP_USER, to_email, msg.as_string())
-        server.quit()
-        logger.info(f"📧 SMTP email sent successfully to {to_email}")
-        return True
     except Exception as e:
-        logger.error(f"SMTP email transmission failed: {e}")
+        logger.error(f"Email HTTP API transmission failed: {e}")
         return False
 
 
