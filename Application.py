@@ -113,70 +113,75 @@ def apply_scheme():
     fallback_logged = False
 
     if opt_in:
-        # Use the unified notification dispatcher
-        notif_result = notification_service.send_confirmation_notification(
-            name=name,
-            email=email,
-            phone=phone,
-            app_type=scheme_type,
-            amount=amount,
-            ref_id=ref_id,
-            tenure=tenure,
-            emi=emi,
-            maturity_amount=maturity_amount,
-            is_deposit=is_deposit
-        )
-        email_status = notif_result["email_status"]
-        sms_status = notif_result["sms_status"]
-        fallback_logged = notif_result["fallback_logged"]
-        msg_text = notif_result["msg_text"]
-        html_body = notif_result["html_body"]
-
-        # ── Log notification attempts to MongoDB & MySQL ─────────────────
-        if email:
-            log_doc = {
-                "ref_id": ref_id,
-                "recipient": encrypted_email,
-                "channel": "email",
-                "status": email_status,
-                "message": msg_text,
-                "html_body": html_body,
-                "timestamp": timestamp
-            }
-            db["notification_logs"].insert_one(log_doc)
-            mysql_backup.add_notification_log(
-                ref_id, encrypted_email, "email", email_status, msg_text, timestamp,
-                html_body=html_body
+        try:
+            # Use the unified notification dispatcher
+            notif_result = notification_service.send_confirmation_notification(
+                name=name,
+                email=email,
+                phone=phone,
+                app_type=scheme_type,
+                amount=amount,
+                ref_id=ref_id,
+                tenure=tenure,
+                emi=emi,
+                maturity_amount=maturity_amount,
+                is_deposit=is_deposit
             )
+            email_status = notif_result["email_status"]
+            sms_status = notif_result["sms_status"]
+            fallback_logged = notif_result["fallback_logged"]
+            msg_text = notif_result["msg_text"]
+            html_body = notif_result.get("html_body", "")
 
-        if phone:
-            log_doc = {
-                "ref_id": ref_id,
-                "recipient": encrypted_phone,
-                "channel": "sms",
-                "status": sms_status,
-                "message": msg_text,
-                "html_body": "",
-                "timestamp": timestamp
-            }
-            db["notification_logs"].insert_one(log_doc)
-            mysql_backup.add_notification_log(
-                ref_id, encrypted_phone, "sms", sms_status, msg_text, timestamp,
-                html_body=""
-            )
+            # ── Log notification attempts to MongoDB & MySQL ─────────────────
+            if email:
+                log_doc = {
+                    "ref_id": ref_id,
+                    "recipient": encrypted_email,
+                    "channel": "email",
+                    "status": email_status,
+                    "message": msg_text,
+                    "html_body": html_body,
+                    "timestamp": timestamp
+                }
+                db["notification_logs"].insert_one(log_doc)
+                mysql_backup.add_notification_log(
+                    ref_id, encrypted_email, "email", email_status, msg_text, timestamp,
+                    html_body=html_body
+                )
 
-        # ── Fallback: persist failed delivery for manual follow-up ───────
-        if fallback_logged:
-            db["notification_fallbacks"].insert_one({
-                "ref_id": ref_id,
-                "name": name,
-                "type": scheme_type,
-                "amount": amount,
-                "email_status": email_status,
-                "sms_status": sms_status,
-                "requires_manual_followup": True,
-                "timestamp": timestamp
-            })
+            if phone:
+                log_doc = {
+                    "ref_id": ref_id,
+                    "recipient": encrypted_phone,
+                    "channel": "sms",
+                    "status": sms_status,
+                    "message": msg_text,
+                    "html_body": "",
+                    "timestamp": timestamp
+                }
+                db["notification_logs"].insert_one(log_doc)
+                mysql_backup.add_notification_log(
+                    ref_id, encrypted_phone, "sms", sms_status, msg_text, timestamp,
+                    html_body=""
+                )
+
+            # ── Fallback: persist failed delivery for manual follow-up ───────
+            if fallback_logged:
+                db["notification_fallbacks"].insert_one({
+                    "ref_id": ref_id,
+                    "name": name,
+                    "type": scheme_type,
+                    "amount": amount,
+                    "email_status": email_status,
+                    "sms_status": sms_status,
+                    "requires_manual_followup": True,
+                    "timestamp": timestamp
+                })
+        except Exception as e:
+            print(f"⚠️ Notification dispatch error (application still saved): {e}")
+            email_status = "Failed"
+            sms_status = "Failed"
 
     return jsonify({
         "status": "success",
