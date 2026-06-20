@@ -9,5 +9,9 @@ services:
         sync: false
       - key: PYTHON_VERSION
         value: "3.9.18"
-      # SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD
+      - key: EMAIL_API_KEY
+        sync: false
+      - key: SENDER_EMAIL
+        sync: false
+      # SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, EMAIL_API_KEY, SENDER_EMAIL
       # are set as secret env vars on Render dashboard
