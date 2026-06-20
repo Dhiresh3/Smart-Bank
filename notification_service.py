@@ -143,19 +143,21 @@ def build_confirmation_text(name: str, app_type: str, amount: float, ref_id: str
 
     if is_deposit:
         return (
-            f"Dear {name}, your {type_label} application has been received. "
+            f"Dear {name}, did you recently apply for a {type_label} with us? "
             f"Ref ID: {ref_id}. "
             f"Amount: Rs {amount:,.2f} for {tenure} years. "
             f"Maturity Amount: Rs {maturity_amount:,.2f}. "
-            f"Thank you for choosing SmartBank!"
+            f"Are you sure you want to proceed with this application? "
+            f"If you have any questions or did not authorize this, please contact us immediately at banksupport@gmail.com."
         )
     else:
         return (
-            f"Dear {name}, your {type_label} Loan application has been received. "
+            f"Dear {name}, did you recently apply for a {type_label} Loan with us? "
             f"Ref ID: {ref_id}. "
             f"Loan Amount: Rs {amount:,.2f} for {tenure} years. "
             f"Expected Monthly EMI: Rs {emi:,.2f}. "
-            f"Thank you for choosing SmartBank!"
+            f"Are you sure you want to proceed with this application? "
+            f"If you have any questions or did not authorize this, please contact us immediately at banksupport@gmail.com."
         )
 
 
@@ -192,12 +194,12 @@ def build_confirmation_html(name: str, app_type: str, amount: float, ref_id: str
 
       <!-- Body -->
       <div style="padding:30px 25px;">
-        <h2 style="color:#0097a7;margin:0 0 5px;font-size:20px;">✅ Application Confirmation</h2>
+        <h2 style="color:#0097a7;margin:0 0 5px;font-size:20px;">❓ Application Verification</h2>
         <p style="color:#888;font-size:13px;margin:0 0 20px;">Submitted on {timestamp}</p>
 
         <p style="color:#333;font-size:15px;line-height:1.6;">
           Dear <strong>{name}</strong>,<br>
-          Your <strong>{type_label}</strong> application has been successfully received and is being processed.
+          Did you recently apply for a <strong>{type_label}</strong> with us? Are you sure you want to proceed with this application?
         </p>
 
         <!-- Details Table -->
@@ -226,7 +228,7 @@ def build_confirmation_html(name: str, app_type: str, amount: float, ref_id: str
 
         <p style="color:#555;font-size:13px;line-height:1.6;">
           Please keep your Reference ID <strong style="color:#d32f2f;">{ref_id}</strong> safe for future correspondence.
-          If you have any questions, contact us at <a href="mailto:support@SmartBank3D.com" style="color:#0097a7;">support@SmartBank3D.com</a> or call <strong>1800-123-456</strong>.
+          If you have any questions, did not authorize this, or want to confirm your application, please contact us immediately at <a href="mailto:banksupport@gmail.com" style="color:#0097a7;">banksupport@gmail.com</a> or call <strong>1800-123-456</strong>.
         </p>
       </div>
 
