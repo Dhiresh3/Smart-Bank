@@ -5,7 +5,7 @@ from pymongo import MongoClient
 
 # MySQL connection settings
 MYSQL_HOST = os.environ.get("MYSQL_HOST", "localhost")
-MYSQL_USER = os.environ.get("MYSQL_USER", "system")
+MYSQL_USER = os.environ.get("MYSQL_USER", "root")
 MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "root")
 MYSQL_DB = os.environ.get("MYSQL_DB", "smartbank_backup")
 
@@ -48,15 +48,24 @@ def init_db():
                     location VARCHAR(255),
                     pass VARCHAR(255),
                     balance DOUBLE,
-                    history TEXT,
                     created_at VARCHAR(255)
+                )
+            """)
+            c.execute("""
+                CREATE TABLE IF NOT EXISTS transactions (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    acc_no VARCHAR(255),
+                    date VARCHAR(255),
+                    type VARCHAR(255),
+                    description TEXT,
+                    amount DOUBLE,
+                    balance DOUBLE
                 )
             """)
             c.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     name VARCHAR(255) PRIMARY KEY,
                     face_enrolled TINYINT(1),
-                    face_image LONGTEXT,
                     image_format VARCHAR(50),
                     image_width INT,
                     image_height INT,
@@ -64,12 +73,23 @@ def init_db():
                 )
             """)
             c.execute("""
+                CREATE TABLE IF NOT EXISTS user_faces (
+                    name VARCHAR(255) PRIMARY KEY,
+                    face_image LONGTEXT
+                )
+            """)
+            c.execute("""
                 CREATE TABLE IF NOT EXISTS logins (
                     id INT AUTO_INCREMENT PRIMARY KEY,
+                    account_number VARCHAR(255),
                     username VARCHAR(255),
                     login_time VARCHAR(255)
                 )
             """)
+            try:
+                c.execute("ALTER TABLE logins ADD COLUMN account_number VARCHAR(255)")
+            except Exception:
+                pass
             c.execute("""
                 CREATE TABLE IF NOT EXISTS verification_failures (
                     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -128,14 +148,14 @@ def sync_account(doc):
         return
     try:
         with conn.cursor() as c:
-            history_str = json.dumps(doc.get("history", []))
             sql = """
                 REPLACE INTO accounts 
-                (acc_no, name, age, income, account_type, location, pass, balance, history, created_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                (acc_no, name, age, income, account_type, location, pass, balance, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
+            acc_no_str = str(doc.get("acc_no", ""))
             c.execute(sql, (
-                str(doc.get("acc_no", "")),
+                acc_no_str,
                 doc.get("name", ""),
                 doc.get("age", 0),
                 float(doc.get("income", 0.0)),
@@ -143,9 +163,26 @@ def sync_account(doc):
                 doc.get("location", ""),
                 doc.get("pass", ""),
                 float(doc.get("balance", 0.0)),
-                history_str,
                 doc.get("created_at", "")
             ))
+            
+            # Sync transactions
+            c.execute("DELETE FROM transactions WHERE acc_no = %s", (acc_no_str,))
+            for tx in doc.get("history", []):
+                if isinstance(tx, dict):
+                    c.execute("""
+                        INSERT INTO transactions (acc_no, date, type, description, amount, balance)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (
+                        acc_no_str,
+                        tx.get("date", ""),
+                        tx.get("type", ""),
+                        tx.get("description", ""),
+                        float(tx.get("amount") or 0.0),
+                        float(tx.get("balance") or 0.0)
+                    ))
+                else:
+                    c.execute("INSERT INTO transactions (acc_no, description) VALUES (%s, %s)", (acc_no_str, str(tx)))
         conn.commit()
     except Exception as e:
         print(f"⚠️ MySQL sync_account error: {e}")
@@ -159,6 +196,7 @@ def delete_account(acc_no):
     try:
         with conn.cursor() as c:
             c.execute("DELETE FROM accounts WHERE acc_no = %s", (str(acc_no),))
+            c.execute("DELETE FROM transactions WHERE acc_no = %s", (str(acc_no),))
         conn.commit()
     except Exception as e:
         print(f"⚠️ MySQL delete_account error: {e}")
@@ -173,18 +211,21 @@ def sync_user(doc):
         with conn.cursor() as c:
             sql = """
                 REPLACE INTO users 
-                (name, face_enrolled, face_image, image_format, image_width, image_height, image_size)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                (name, face_enrolled, image_format, image_width, image_height, image_size)
+                VALUES (%s, %s, %s, %s, %s, %s)
             """
+            user_name = doc.get("name", "")
             c.execute(sql, (
-                doc.get("name", ""),
+                user_name,
                 1 if doc.get("face_enrolled") else 0,
-                doc.get("face_image", ""),
                 doc.get("image_format", ""),
                 doc.get("image_width", 0),
                 doc.get("image_height", 0),
                 doc.get("image_size", 0)
             ))
+            
+            if doc.get("face_image"):
+                c.execute("REPLACE INTO user_faces (name, face_image) VALUES (%s, %s)", (user_name, doc.get("face_image", "")))
         conn.commit()
     except Exception as e:
         print(f"⚠️ MySQL sync_user error: {e}")
@@ -198,19 +239,20 @@ def delete_user(name):
     try:
         with conn.cursor() as c:
             c.execute("DELETE FROM users WHERE name = %s", (name,))
+            c.execute("DELETE FROM user_faces WHERE name = %s", (name,))
         conn.commit()
     except Exception as e:
         print(f"⚠️ MySQL delete_user error: {e}")
     finally:
         conn.close()
 
-def add_login(username, login_time):
+def add_login(username, login_time, account_number=None):
     conn = get_connection()
     if not conn:
         return
     try:
         with conn.cursor() as c:
-            c.execute("INSERT INTO logins (username, login_time) VALUES (%s, %s)", (username, login_time))
+            c.execute("INSERT INTO logins (username, login_time, account_number) VALUES (%s, %s, %s)", (username, login_time, account_number))
         conn.commit()
     except Exception as e:
         print(f"⚠️ MySQL add_login error: {e}")
@@ -264,33 +306,49 @@ def sync_all_mongo_to_sqlite():
         with conn.cursor() as c:
             # Sync Accounts
             for doc in db["accounts"].find():
-                history_str = json.dumps(doc.get("history", []))
+                acc_no_str = str(doc.get("acc_no", ""))
                 c.execute("""
                     REPLACE INTO accounts 
-                    (acc_no, name, age, income, account_type, location, pass, balance, history, created_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    (acc_no, name, age, income, account_type, location, pass, balance, created_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    str(doc.get("acc_no", "")), doc.get("name", ""), doc.get("age", 0), float(doc.get("income", 0.0)),
+                    acc_no_str, doc.get("name", ""), doc.get("age", 0), float(doc.get("income", 0.0)),
                     doc.get("account_type", ""), doc.get("location", ""), doc.get("pass", ""), float(doc.get("balance", 0.0)),
-                    history_str, doc.get("created_at", "")
+                    doc.get("created_at", "")
                 ))
+                
+                c.execute("DELETE FROM transactions WHERE acc_no = %s", (acc_no_str,))
+                for tx in doc.get("history", []):
+                    if isinstance(tx, dict):
+                        c.execute("""
+                            INSERT INTO transactions (acc_no, date, type, description, amount, balance)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                        """, (
+                            acc_no_str, tx.get("date", ""), tx.get("type", ""), tx.get("description", ""),
+                            float(tx.get("amount") or 0.0), float(tx.get("balance") or 0.0)
+                        ))
+                    else:
+                        c.execute("INSERT INTO transactions (acc_no, description) VALUES (%s, %s)", (acc_no_str, str(tx)))
             
             # Sync Users (faces)
             for doc in db["users"].find():
+                user_name = doc.get("name", "")
                 c.execute("""
                     REPLACE INTO users 
-                    (name, face_enrolled, face_image, image_format, image_width, image_height, image_size)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    (name, face_enrolled, image_format, image_width, image_height, image_size)
+                    VALUES (%s, %s, %s, %s, %s, %s)
                 """, (
-                    doc.get("name", ""), 1 if doc.get("face_enrolled") else 0, doc.get("face_image", ""),
+                    user_name, 1 if doc.get("face_enrolled") else 0,
                     doc.get("image_format", ""), doc.get("image_width", 0), doc.get("image_height", 0), doc.get("image_size", 0)
                 ))
+                if doc.get("face_image"):
+                    c.execute("REPLACE INTO user_faces (name, face_image) VALUES (%s, %s)", (user_name, doc.get("face_image", "")))
             
             # Sync Logins
             c.execute("DELETE FROM logins")
             for doc in db["logins"].find():
-                c.execute("INSERT INTO logins (username, login_time) VALUES (%s, %s)", 
-                          (doc.get("username", ""), doc.get("login_time", "")))
+                c.execute("INSERT INTO logins (username, login_time, account_number) VALUES (%s, %s, %s)", 
+                          (doc.get("username", ""), doc.get("login_time", ""), doc.get("account_number", "")))
             
             # Sync Verification Failures
             c.execute("DELETE FROM verification_failures")

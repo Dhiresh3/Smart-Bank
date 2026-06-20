@@ -972,6 +972,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               username: account.name || 'User',
+              account_number: accNum,
               login_time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
             })
           }).catch(() => { }); // silently ignore if backend is offline

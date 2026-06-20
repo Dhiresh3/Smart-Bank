@@ -88,7 +88,7 @@ print(f"\n{'='*60}")
 print(f"🔑 LOGINS COLLECTION — last {len(logins)} login(s)")
 print(f"{'='*60}")
 for lg in logins:
-    print(f"  [{lg.get('login_time','?')}] {lg.get('username','?')}")
+    print(f"  [{lg.get('login_time','?')}] {lg.get('username','?')} (Acc No: {lg.get('account_number','N/A')})")
 
 print(f"\n{'='*60}")
 print("✅ Done! All data shown above.")

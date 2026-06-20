@@ -552,14 +552,16 @@ def ai_chat():
 def log_login():
     data = request.get_json(force=True, silent=True) or {}
     username = data.get("username", "Unknown")
+    account_number = data.get("account_number", "Unknown")
     login_time = data.get("login_time", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
     # Insert login record into MongoDB
     logins_col.insert_one({
         "username": username,
+        "account_number": account_number,
         "login_time": login_time
     })
-    mysql_backup.add_login(username, login_time)
+    mysql_backup.add_login(username, login_time, account_number)
 
     return jsonify({"status": "success", "message": "Login recorded"})
 
