@@ -702,6 +702,7 @@
       font-weight: 500;
       margin-top: 14px;
       animation: fadeDown 0.3s ease both;
+      line-height: 1.5;
     }
 
     .signup-alert.error {
@@ -715,6 +716,111 @@
       border: 1px solid rgba(46, 204, 113, 0.35);
       color: #6be0a0;
     }
+
+    /* ── CAMERA STEP ── */
+    .camera-step {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      margin: 10px 0;
+    }
+    .camera-step.active { display: flex; }
+
+    #signupVideo {
+      width: 100%;
+      max-width: 320px;
+      height: 220px;
+      object-fit: cover;
+      border-radius: 14px;
+      border: 2px solid rgba(0, 188, 212, 0.45);
+      background: #000;
+      box-shadow: 0 0 24px rgba(0, 188, 212, 0.18);
+    }
+
+    #signupCanvas { display: none; }
+
+    .camera-hint {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .camera-face-ring {
+      position: relative;
+      width: 100%;
+      max-width: 320px;
+    }
+    .camera-face-ring::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px; height: 150px;
+      border: 2px dashed rgba(0,188,212,0.6);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .btn-capture {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 13px;
+      background: linear-gradient(135deg, #0097a7, #00bcd4);
+      color: white;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(0,188,212,0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-capture:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,188,212,0.45); }
+    .btn-capture:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-retake {
+      background: transparent;
+      border: 1px solid rgba(0,188,212,0.4);
+      color: var(--cyan);
+      border-radius: 10px;
+      padding: 9px 18px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-retake:hover { background: rgba(0,188,212,0.08); }
+
+    .face-preview {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .face-preview.active { display: flex; }
+    .face-preview img {
+      width: 140px;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 3px solid var(--cyan);
+      box-shadow: 0 0 20px rgba(0,188,212,0.4);
+    }
+    .face-ok-badge {
+      font-size: 13px;
+      color: #6be0a0;
+      background: rgba(46,204,113,0.1);
+      border: 1px solid rgba(46,204,113,0.3);
+      border-radius: 8px;
+      padding: 6px 14px;
+    }
+
+    .modal-box { max-height: 90vh; overflow-y: auto; }
   </style>
 </head>
 
@@ -809,44 +915,89 @@
   <div class="modal-overlay" id="signupModal">
     <div class="modal-box">
       <span class="modal-close" onclick="closeSignup()">✕</span>
-      <div class="modal-title">Create Account</div>
-      <div class="modal-sub">Open your Skiller SmartBank 3D account</div>
 
-      <div class="field">
-        <label for="su_name">Full Name</label>
-        <div class="input-wrap">
-          <input type="text" id="su_name" placeholder="Your full name" />
-          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="7" r="4" />
-            <path d="M5.5 21a8.5 8.5 0 0 1 13 0" />
-          </svg>
+      <!-- STEP 1: Form -->
+      <div id="signupStep1">
+        <div class="modal-title">Create Account</div>
+        <div class="modal-sub">Fill in your details to get started</div>
+
+        <div class="field">
+          <label for="su_name">Full Name</label>
+          <div class="input-wrap">
+            <input type="text" id="su_name" placeholder="Your full name" />
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="7" r="4" />
+              <path d="M5.5 21a8.5 8.5 0 0 1 13 0" />
+            </svg>
+          </div>
         </div>
+
+        <div class="field">
+          <label for="su_age">Age</label>
+          <div class="input-wrap">
+            <input type="text" id="su_age" placeholder="Must be 18 or above" />
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="su_pass">Password</label>
+          <div class="input-wrap">
+            <input type="password" id="su_pass" placeholder="Choose a password (min 4 chars)" />
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="su_pass2">Confirm Password</label>
+          <div class="input-wrap">
+            <input type="password" id="su_pass2" placeholder="Repeat your password" />
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 12l2 2 4-4" />
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+            </svg>
+          </div>
+        </div>
+
+        <div class="signup-alert" id="signupAlertStep1"></div>
+        <button class="btn-create" id="btnGoToCamera" onclick="goToFaceCapture()" style="margin-top:8px">Next — Capture Face &nbsp;📷</button>
       </div>
 
-      <div class="field">
-        <label for="su_pass">Password</label>
-        <div class="input-wrap">
-          <input type="password" id="su_pass" placeholder="Choose a password" />
-          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" />
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-          </svg>
+      <!-- STEP 2: Face Capture -->
+      <div id="signupStep2" style="display:none">
+        <div class="modal-title">Face Verification</div>
+        <div class="modal-sub">Position your face in the frame and click Capture</div>
+
+        <!-- Live camera -->
+        <div class="camera-step active" id="cameraLiveSection">
+          <div class="camera-face-ring">
+            <video id="signupVideo" autoplay playsinline muted></video>
+          </div>
+          <p class="camera-hint">📸 Keep your face inside the oval outline and ensure good lighting</p>
+          <button class="btn-capture" id="btnCaptureFace" onclick="captureSignupFace()">📷 Capture My Face</button>
+        </div>
+
+        <!-- Face preview after capture -->
+        <div class="face-preview" id="facePreviewSection">
+          <img id="capturedFaceImg" src="" alt="Captured face" />
+          <div class="face-ok-badge">✅ Face captured successfully!</div>
+          <button class="btn-retake" onclick="retakeSignupFace()">🔄 Retake</button>
+        </div>
+
+        <canvas id="signupCanvas"></canvas>
+
+        <div class="signup-alert" id="signupAlertStep2" style="margin-top:12px"></div>
+
+        <div style="display:flex; gap:10px; margin-top:14px">
+          <button class="btn-retake" style="flex:1" onclick="goBackToStep1()">← Back</button>
+          <button class="btn-create" id="btnSubmitSignup" style="flex:2" onclick="submitSignupWithFace()" disabled>Create Account 🏛</button>
         </div>
       </div>
-
-      <div class="field">
-        <label for="su_pass2">Confirm Password</label>
-        <div class="input-wrap">
-          <input type="password" id="su_pass2" placeholder="Repeat your password" />
-          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 12l2 2 4-4" />
-            <rect x="3" y="11" width="18" height="11" rx="2" />
-          </svg>
-        </div>
-      </div>
-
-      <button class="btn-create" onclick="handleSignup()">Open Account</button>
-      <div class="signup-alert" id="signupAlert"></div>
     </div>
   </div>
 
@@ -1030,14 +1181,21 @@
     // ─────────────────────────────────────────────
     function openSignup() {
       document.getElementById('signupModal').classList.add('open');
-      document.getElementById('su_name').focus();
-      document.getElementById('signupAlert').style.display = 'none';
+      // Reset to step 1
+      document.getElementById('signupStep1').style.display = 'block';
+      document.getElementById('signupStep2').style.display = 'none';
+      hideSignupAlerts && hideSignupAlerts();
       document.getElementById('su_name').value = '';
+      document.getElementById('su_age').value  = '';
       document.getElementById('su_pass').value = '';
       document.getElementById('su_pass2').value = '';
+      _capturedB64 = null;
+      stopSignupCamera && stopSignupCamera();
+      document.getElementById('su_name').focus();
     }
 
     function closeSignup() {
+      stopSignupCamera && stopSignupCamera();
       document.getElementById('signupModal').classList.remove('open');
     }
 
@@ -1046,39 +1204,190 @@
       if (e.target === this) closeSignup();
     });
 
-    function showSignupAlert(type, msg) {
-      const el = document.getElementById('signupAlert');
+    // ─────────────────────────────────────────────
+    //  SIGNUP — STATE
+    // ─────────────────────────────────────────────
+    let _signupStream = null;   // active MediaStream
+    let _capturedB64  = null;   // captured face as base64 data-URL
+
+    function showSignupAlert1(type, msg) {
+      const el = document.getElementById('signupAlertStep1');
       el.className = `signup-alert ${type}`;
       el.textContent = msg;
       el.style.display = 'block';
     }
+    function showSignupAlert2(type, msg) {
+      const el = document.getElementById('signupAlertStep2');
+      el.className = `signup-alert ${type}`;
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+    function hideSignupAlerts() {
+      document.getElementById('signupAlertStep1').style.display = 'none';
+      document.getElementById('signupAlertStep2').style.display = 'none';
+    }
 
-    function handleSignup() {
-      const name = document.getElementById('su_name').value.trim();
-      const pass = document.getElementById('su_pass').value;
+    // STEP 1 → STEP 2: validate form fields then open camera
+    async function goToFaceCapture() {
+      const name  = document.getElementById('su_name').value.trim();
+      const age   = parseInt(document.getElementById('su_age').value.trim(), 10);
+      const pass  = document.getElementById('su_pass').value;
       const pass2 = document.getElementById('su_pass2').value;
 
-      if (!name) { showSignupAlert('error', '⚠️  Please enter your full name.'); return; }
-      if (pass.length < 3) { showSignupAlert('error', '⚠️  Password must be at least 3 characters.'); return; }
-      if (pass !== pass2) { showSignupAlert('error', '❌  Passwords do not match.'); return; }
+      hideSignupAlerts();
+      if (!name)          { showSignupAlert1('error', '⚠️ Please enter your full name.'); return; }
+      if (!age || age < 18) { showSignupAlert1('error', '⚠️ You must be at least 18 years old.'); return; }
+      if (pass.length < 4) { showSignupAlert1('error', '⚠️ Password must be at least 4 characters.'); return; }
+      if (pass !== pass2)  { showSignupAlert1('error', '❌ Passwords do not match.'); return; }
 
-      // Generate a random account number
-      const accNo = Math.floor(10000000 + Math.random() * 89999999).toString();
+      // Switch to step 2
+      document.getElementById('signupStep1').style.display = 'none';
+      document.getElementById('signupStep2').style.display = 'block';
+      _capturedB64 = null;
+      document.getElementById('btnSubmitSignup').disabled = true;
+      document.getElementById('facePreviewSection').classList.remove('active');
+      document.getElementById('cameraLiveSection').classList.add('active');
 
-      // Save to in-memory DB (note: without a backend, this won't persist to accounts.json)
-      accountsDB[accNo] = { name, pass, balance: 0.0, history: [] };
+      // Request camera access
+      await startSignupCamera();
+    }
 
-      showSignupAlert('success',
-        `✅ Account created!\n\nAccount Number: ${accNo}\nPlease save this — you need it to log in.`);
+    async function startSignupCamera() {
+      const video = document.getElementById('signupVideo');
+      stopSignupCamera();
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+          audio: false
+        });
+        _signupStream = stream;
+        video.srcObject = stream;
+        await video.play();
+        showSignupAlert2('', '');
+        document.getElementById('signupAlertStep2').style.display = 'none';
+      } catch (err) {
+        console.error('Camera error:', err);
+        let msg = '❌ Camera access is required to create your account.';
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          msg = '🚫 Camera permission was denied. Please click the camera icon in your browser address bar → Allow → then click "Next — Capture Face" again.';
+        } else if (err.name === 'NotFoundError') {
+          msg = '📷 No camera found. Please connect a camera and try again.';
+        }
+        showSignupAlert2('error', msg);
+        document.getElementById('btnCaptureFace').disabled = true;
+      }
+    }
 
-      // Auto-fill login fields for convenience
-      setTimeout(() => {
-        closeSignup();
-        document.getElementById('accNum').value = accNo;
-        document.getElementById('accPass').value = pass;
-        showAlert('loginAlert', 'success',
-          `🎉 Welcome, ${name}! Your account number is ${accNo}. It has been pre-filled below.`);
-      }, 3500);
+    function stopSignupCamera() {
+      if (_signupStream) {
+        _signupStream.getTracks().forEach(t => t.stop());
+        _signupStream = null;
+      }
+      const video = document.getElementById('signupVideo');
+      video.srcObject = null;
+    }
+
+    function captureSignupFace() {
+      const video  = document.getElementById('signupVideo');
+      const canvas = document.getElementById('signupCanvas');
+      if (!video.videoWidth) {
+        showSignupAlert2('error', '⚠️ Camera not ready yet — please wait a moment and try again.');
+        return;
+      }
+      canvas.width  = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      // Mirror the drawn image so it looks natural (selfie-style)
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0);
+      ctx.setTransform(1,0,0,1,0,0);
+
+      _capturedB64 = canvas.toDataURL('image/jpeg', 0.92);
+
+      // Show preview
+      document.getElementById('capturedFaceImg').src = _capturedB64;
+      document.getElementById('cameraLiveSection').classList.remove('active');
+      document.getElementById('facePreviewSection').classList.add('active');
+      document.getElementById('btnSubmitSignup').disabled = false;
+      stopSignupCamera();
+    }
+
+    function retakeSignupFace() {
+      _capturedB64 = null;
+      document.getElementById('btnSubmitSignup').disabled = true;
+      document.getElementById('facePreviewSection').classList.remove('active');
+      document.getElementById('cameraLiveSection').classList.add('active');
+      document.getElementById('btnCaptureFace').disabled = false;
+      startSignupCamera();
+    }
+
+    function goBackToStep1() {
+      stopSignupCamera();
+      _capturedB64 = null;
+      document.getElementById('signupStep2').style.display = 'none';
+      document.getElementById('signupStep1').style.display = 'block';
+      hideSignupAlerts();
+    }
+
+    // Final submission — POST to /open_account → saves to MongoDB
+    async function submitSignupWithFace() {
+      if (!_capturedB64) {
+        showSignupAlert2('error', '⚠️ Please capture your face first.');
+        return;
+      }
+
+      const name  = document.getElementById('su_name').value.trim();
+      const age   = parseInt(document.getElementById('su_age').value.trim(), 10);
+      const pass  = document.getElementById('su_pass').value;
+
+      const btn = document.getElementById('btnSubmitSignup');
+      btn.disabled = true;
+      btn.textContent = '⏳ Creating account…';
+
+      try {
+        const res = await fetch('/open_account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            age,
+            income: 0,
+            account_type: 'Savings',
+            location: '',
+            pass,
+            face_image: _capturedB64
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.status === 'success') {
+          const accNo = data.account_number;
+
+          // Reflect new account in local in-memory DB so login works immediately
+          accountsDB[accNo] = { name, pass, balance: 0.0, history: [] };
+
+          showSignupAlert2('success',
+            `🎉 Account created!\nAccount No: ${accNo}\nFace enrolled ✅\n\nSave your account number!`);
+
+          setTimeout(() => {
+            closeSignup();
+            document.getElementById('accNum').value = accNo;
+            document.getElementById('accPass').value = pass;
+            showAlert('loginAlert', 'success',
+              `🎉 Welcome, ${name}! Account No: ${accNo} — pre-filled below. Sign in now!`);
+          }, 3000);
+        } else {
+          showSignupAlert2('error', data.message || '❌ Account creation failed. Please try again.');
+          btn.disabled = false;
+          btn.textContent = 'Create Account 🏛';
+        }
+      } catch (err) {
+        showSignupAlert2('error', '❌ Server error. Make sure the backend is running and try again.');
+        btn.disabled = false;
+        btn.textContent = 'Create Account 🏛';
+      }
     }
 
     // ─────────────────────────────────────────────
