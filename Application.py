@@ -555,7 +555,6 @@ def log_login():
     account_number = data.get("account_number", "Unknown")
     login_time = data.get("login_time", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-    # Insert login record into MongoDB
     logins_col.insert_one({
         "username": username,
         "account_number": account_number,
@@ -579,7 +578,6 @@ def log_failed_attempt():
     reason = data.get("reason", "Face verification failed")
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Record failure event in MongoDB collection
     verification_failures_col.insert_one({
         "account_number": acc_no,
         "action": action,
@@ -606,7 +604,6 @@ def register_complaint():
     if not name or not email or not contact or not comments:
         return jsonify({"success": False, "message": "All fields are required."}), 400
 
-    # Insert into MongoDB
     complaints_col.insert_one({
         "name": name,
         "email": email,
@@ -615,7 +612,6 @@ def register_complaint():
         "timestamp": timestamp
     })
 
-    # Backup to MySQL
     mysql_backup.add_complaint(name, email, contact, comments, timestamp)
 
     return jsonify({"success": True, "message": "✅ Your thoughts have been registered successfully! Thank you."})
@@ -626,4 +622,3 @@ if __name__ == "__main__":
     mysql_backup.sync_all_mongo_to_sqlite()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
-

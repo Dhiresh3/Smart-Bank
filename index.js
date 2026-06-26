@@ -8,7 +8,6 @@ let _cameraStream = null;
 let _cameraVideo = null;
 // Global map to track verification attempts per response element
 const attemptCounters = {};
-let _cameraVideo = null;
 
 async function startHiddenCamera() {
   if (_cameraStream) return;
@@ -698,8 +697,7 @@ async function openPassbook() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ account_number: acc, password: pass, face_image: faceImage })
     });
-
-    if (res.status === 401) {
+    const data = await res.json();
 
     if (data.status === "success") {
       const details = data.account_details;

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lily AI</title>
+    <style>
+        /* Beautiful Dark Mode Lily AI styling */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0f0f0f;
+            font-family: 'Inter', sans-serif;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            perspective: 1000px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 10;
+        }
+
+        /* 3D Orb Effect */
+        .orb-container {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin-bottom: 40px;
+            transform-style: preserve-3d;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* Pink/Purple tones for Lily AI */
+        .orb {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #e0a3d4, #b265cc, #1c1c1c);
+            box-shadow: 
+                0 0 60px rgba(224, 163, 212, 0.4),
+                inset -20px -20px 40px rgba(0,0,0,0.8),
+                inset 20px 20px 40px rgba(255,255,255,0.2);
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-style: preserve-3d;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+        }
+
+        .orb.listening {
+            animation: pulse 1.5s infinite alternate;
+            background: radial-gradient(circle at 30% 30%, #fce0fe, #e0a3d4, #1c1c1c);
+            box-shadow: 
+                0 0 100px rgba(224, 163, 212, 0.8),
+                inset -20px -20px 40px rgba(0,0,0,0.8),
+                inset 20px 20px 40px rgba(255,255,255,0.4);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px) rotateX(10deg) rotateY(10deg); }
+            50% { transform: translateY(-20px) rotateX(-5deg) rotateY(-15deg); }
+            100% { transform: translateY(0px) rotateX(10deg) rotateY(10deg); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+        .title {
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            color: #e0a3d4;
+            text-shadow: 0 0 10px rgba(224, 163, 212, 0.5);
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        /* Input area */
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+            min-width: 400px;
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 5px 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: #e0a3d4;
+            box-shadow: 0 0 20px rgba(224, 163, 212, 0.2);
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 15px;
+            font-size: 1rem;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        input[type="text"]::placeholder {
+            color: rgba(255,255,255,0.3);
+        }
+
+        .btn {
+            background: transparent;
+            border: none;
+            color: #e0a3d4;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 10px;
+            margin-left: 5px;
+            transition: transform 0.2s, color 0.2s, background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+        }
+
+        .btn:hover {
+            transform: scale(1.1);
+            color: #fff;
+            background: rgba(224, 163, 212, 0.2);
+        }
+
+        /* 3D Background effect */
+        .bg-grid {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: perspective(500px) rotateX(60deg) translateY(-100px) translateZ(-200px);
+            animation: gridMove 20s linear infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        @keyframes gridMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 1000px; }
+        }
+        
+        .status-msg {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #aaa;
+            min-height: 20px;
+            text-align: center;
+        }
+
+    </style>
+    <!-- Use FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="container">
+        <div class="title">Lily AI</div>
+        <div class="subtitle">Your intelligent voice assistant</div>
+        
+        <div class="orb-container" id="orb-container">
+            <div class="orb" id="orb"></div>
+        </div>
+
+        <div class="input-wrapper">
+            <input type="text" id="commandInput" placeholder="Ask Lily to open something..." autocomplete="off">
+            <button class="btn" id="micBtn" title="Voice Command (uses desktop mic)"><i class="fas fa-microphone"></i></button>
+            <button class="btn" id="sendBtn" title="Send Command"><i class="fas fa-paper-plane"></i></button>
+        </div>
+        <div class="status-msg" id="statusMsg"></div>
+    </div>
+
+    <script>
+        const orb = document.getElementById('orb');
+        const orbContainer = document.getElementById('orb-container');
+        const commandInput = document.getElementById('commandInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const micBtn = document.getElementById('micBtn');
+        const statusMsg = document.getElementById('statusMsg');
+
+        // Interaction with orb based on mouse movement
+        document.addEventListener('mousemove', (e) => {
+            const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
+            const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
+            orbContainer.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        });
+
+        async function sendCommand(command) {
+            if(!command.trim()) return;
+            statusMsg.innerText = "Thinking...";
+            statusMsg.style.color = "#e0a3d4";
+            commandInput.value = "";
+            
+            try {
+                const response = await fetch('/command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: command })
+                });
+                const data = await response.json();
+                statusMsg.innerText = data.message;
+                statusMsg.style.color = data.status === "success" ? "#a8d5ba" : "#e07a5f";
+            } catch (error) {
+                statusMsg.innerText = "Error connecting to Lily.";
+                statusMsg.style.color = "#e07a5f";
+            }
+        }
+
+        async function triggerVoiceCommand() {
+            orb.classList.add('listening');
+            statusMsg.innerText = "Listening on desktop microphone... (Speak now)";
+            statusMsg.style.color = "#e0a3d4";
+            micBtn.style.color = "#ff4d4d";
+
+            try {
+                const response = await fetch('/voice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                
+                if(data.command) {
+                    statusMsg.innerText = `You said: "${data.command}"\n${data.message}`;
+                } else {
+                    statusMsg.innerText = data.message;
+                }
+                statusMsg.style.color = data.status === "success" ? "#a8d5ba" : "#e07a5f";
+            } catch (error) {
+                statusMsg.innerText = "Error triggering voice input.";
+                statusMsg.style.color = "#e07a5f";
+            } finally {
+                orb.classList.remove('listening');
+                micBtn.style.color = "#e0a3d4";
+            }
+        }
+
+        sendBtn.addEventListener('click', () => {
+            sendCommand(commandInput.value);
+        });
+
+        commandInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendCommand(commandInput.value);
+            }
+        });
+
+        micBtn.addEventListener('click', () => {
+            triggerVoiceCommand();
+        });
+
+    </script>
+</body>
+</html>

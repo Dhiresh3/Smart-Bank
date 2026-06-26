@@ -168,6 +168,6 @@ def delete_face(name):
     mysql_backup.delete_user(name)
     
     if result.deleted_count:
-        print(f"🗑️  Face data deleted for {name}")
+        print(f"[DELETED] Face data deleted for {name}")
     else:
-        print(f"ℹ️  No face data found for {name} — nothing to delete")
+        print(f"[INFO] No face data found for {name} - nothing to delete")

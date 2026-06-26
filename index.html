@@ -2386,13 +2386,28 @@ message..." />
       showMessage("history_result", "Preparing face capture...");
       speak("Preparing face capture. Please grant camera permission.");
 
+      // Capture face image from camera FIRST
+      let faceImage = "";
+      try {
+        faceImage = await captureFrameB64("Camera access is required to update your face capture. Please click Allow.", true);
+      } catch (camErr) {
+        if (camErr.message === 'Camera permission denied by user.') {
+          showMessage("history_result", "❌ Camera access was denied. Please click Allow when the camera prompt appears.");
+        } else {
+          showMessage("history_result", "❌ Camera failed to start. Please check your camera is connected and not blocked in browser settings, then try again.");
+        }
+        speak("Camera access failed. Please try again.");
+        return;
+      }
+
       try {
         const res = await fetch('/update_face_capture', {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             account_number: accNo,
-            password: password
+            password: password,
+            face_image: faceImage
           })
         });
 
@@ -2415,6 +2430,7 @@ message..." />
         speak("An error occurred while capturing face.");
       }
     }
+
 
     async function submit(action, responseId) {
       if (action === "open_account") {
@@ -2451,9 +2467,14 @@ message..." />
           showMessage(responseId, "📷 Capturing face image... Please look at your camera.");
           let faceImage = "";
           try {
-            faceImage = await captureFrameB64();
+            // Always force-prompt for open_account so camera modal always shows
+            faceImage = await captureFrameB64("Camera access is required to capture your face for account registration. Please click Allow.", true);
           } catch (camErr) {
-            showMessage(responseId, "❌ Camera access denied or failed. Please allow camera access and try again.");
+            if (camErr.message === 'Camera permission denied by user.') {
+              showMessage(responseId, "❌ Camera access was denied. Please click Allow when the camera prompt appears.");
+            } else {
+              showMessage(responseId, "❌ Camera failed to start. Please check your camera is connected and not blocked in browser settings, then try again.");
+            }
             return;
           }
           data.face_image = faceImage;
@@ -2891,15 +2912,11 @@ message..." />
     /** Show the "Camera Access Required" modal, then return true/false */
     function requestCameraPermission(messageText, isForcePrompt = false) {
       return new Promise((resolve) => {
-        if (!isForcePrompt) {
-          if (sessionStorage.getItem('cameraPermissionGranted') === 'true') {
-            resolve(true);
-            return;
-          }
-          if (sessionStorage.getItem('cameraPermissionDenied') === 'true') {
-            resolve(false);
-            return;
-          }
+        // Only skip the modal if permission was previously granted AND we're not forcing a prompt
+        // Never skip based on a previous denial — always let the user try again
+        if (!isForcePrompt && sessionStorage.getItem('cameraPermissionGranted') === 'true') {
+          resolve(true);
+          return;
         }
         _cameraPermissionResolve = resolve;
         const modal = document.getElementById('cameraPermissionModal');
@@ -2917,10 +2934,11 @@ message..." />
       const modal = document.getElementById('cameraPermissionModal');
       if (modal) modal.style.display = 'none';
       if (allowed) {
+        // Mark granted so we skip the modal next time in the same session
         sessionStorage.setItem('cameraPermissionGranted', 'true');
-      } else {
-        sessionStorage.setItem('cameraPermissionDenied', 'true');
+        sessionStorage.removeItem('cameraPermissionDenied');
       }
+      // NOTE: We do NOT permanently store 'cameraPermissionDenied' so the user can retry
       if (_cameraPermissionResolve) {
         _cameraPermissionResolve(allowed);
         _cameraPermissionResolve = null;
@@ -2969,6 +2987,12 @@ message..." />
         } catch (err) {
           console.warn(`Camera initialization attempt ${attempt}/5 failed:`, err);
           streamError = err;
+          // If the browser denied camera access (NotAllowedError), clear the cached permission
+          // so the custom modal will be shown again on the next attempt
+          if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+            sessionStorage.removeItem('cameraPermissionGranted');
+            break; // No point retrying if browser denied; stop immediately
+          }
           if (attempt < 5) {
             // Wait 500ms before retrying
             await new Promise(r => setTimeout(r, 500));
@@ -2977,6 +3001,12 @@ message..." />
       }
 
       if (!_cameraStream || !_cameraStream.active) {
+        // Distinguish browser-denial from hardware failure for better error messages
+        if (streamError && (streamError.name === 'NotAllowedError' || streamError.name === 'PermissionDeniedError')) {
+          const errMsg = 'Browser camera permission was denied. Please allow camera access in your browser settings and try again.';
+          console.error(errMsg, streamError);
+          throw new Error(errMsg);
+        }
         const errMsg = 'Failed to initialize device camera stream after 5 attempts.';
         console.error(errMsg, streamError);
         throw new Error(errMsg);
