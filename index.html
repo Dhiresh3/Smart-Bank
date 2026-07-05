@@ -1107,10 +1107,28 @@ message..." />
   <script>
 
     function speak(text) {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
       const msg = new SpeechSynthesisUtterance(text);
       msg.lang = "en-IN";
       msg.rate = 1;
-      window.speechSynthesis.speak(msg);
+      const setVoiceAndSpeak = () => {
+        const voices = window.speechSynthesis.getVoices();
+        const femaleVoice = voices.find(v => 
+          v.name.includes('Zira') || 
+          v.name.includes('Female') || 
+          v.name.includes('Samantha') || 
+          v.name.includes('Google UK English Female') ||
+          (v.name.includes('Ravi') === false && v.name.includes('Heera'))
+        );
+        if (femaleVoice) msg.voice = femaleVoice;
+        window.speechSynthesis.speak(msg);
+      };
+      if (window.speechSynthesis.getVoices().length === 0) {
+        window.speechSynthesis.onvoiceschanged = setVoiceAndSpeak;
+      } else {
+        setVoiceAndSpeak();
+      }
     }
     const LOCK_DURATION_MS = 7000; // lock duration while voice plays
     let isLocked = false;
@@ -1258,6 +1276,9 @@ message..." />
       const element = document.getElementById(elementId);
       if (!element) return;
 
+      // Speak the success/failure message!
+      speak(message.replace(/[\u{1F300}-\u{1F9FF}]/gu, '')); // remove emojis for cleaner speech
+
       // Clear any existing timeout for this element
       if (messageTimeouts[elementId]) {
         clearTimeout(messageTimeouts[elementId]);
@@ -1275,14 +1296,20 @@ message..." />
       }, 2500);
     }
     function playAudioForSection(sectionName) {
-      try {
-        let audio = new Audio(`/static/audio/${sectionName}.mp3`);
-        audio.play().catch(err => {
-          console.log("Audio file not found or cannot play:", err);
-        });
-      } catch (err) {
-        console.log("Audio playback error:", err);
-      }
+      const sectionTexts = {
+        'home': "Welcome to the Home dashboard.",
+        'profile': "Here are your profile details.",
+        'deposit': "Deposit money into your account securely.",
+        'withdraw': "Withdraw money from your account.",
+        'transfer': "Transfer money to another account.",
+        'history': "View your transaction history.",
+        'apply_scheme': "Apply for loans or schemes.",
+        'support': "Customer support and assistance.",
+        'complaint': "Register a complaint or suggestion.",
+        'settings': "Manage your account settings."
+      };
+      const text = sectionTexts[sectionName] || "You are now in the " + sectionName + " section.";
+      speak(text);
     }
 
     // Controls visibility of sections based on application state
@@ -1981,7 +2008,7 @@ message..." />
         showMessage("history_result", `Showing ${validTransactions.length} complete transaction(s) with full details.`);
         speak(`Showing your complete transaction history with ${validTransactions.length} transactions.`);
 
-        fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'index.html:getHistory', message: 'Displaying transaction history', data: { transactionCount: validTransactions.length, sampleTx: validTransactions[0] }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) }).catch(() => { });
+        // telemetry removed, sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) }).catch(() => { });
 
         // Get account name from response
         const accountName = data.account_name || "";
@@ -2863,14 +2890,8 @@ message..." />
 
     window.onload = () => {
       showSection('home');
-      const welcomeMsg = new SpeechSynthesisUtterance("Welcome to Skiller SmartBank. Your secure and expressive banking experience starts now.");
-      welcomeMsg.lang = "en-IN";
-      welcomeMsg.rate = 1;
-      welcomeMsg.onend = () => {
-        speak("Tech bhi smart, Paise bhi safe!");
-        isInitialLoad = false; // Mark initial load as complete
-      };
-      window.speechSynthesis.speak(welcomeMsg);
+      speak("Welcome to Skiller SmartBank. Your secure and expressive banking experience starts now. Tech bhi smart, Paise bhi safe!");
+      setTimeout(() => { isInitialLoad = false; }, 3000);
 
       setTimeout(() => {
         const container = document.getElementById('logoContainer');
@@ -2878,14 +2899,14 @@ message..." />
         const containerStyles = container ? window.getComputedStyle(container) : null;
         const imgStyles = img ? window.getComputedStyle(img) : null;
 
-        fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'index.html:window.onload', message: 'Logo container check', data: { containerExists: !!container, imgExists: !!img, containerDisplay: containerStyles?.display, containerWidth: containerStyles?.width, imgWidth: imgStyles?.width, imgHeight: imgStyles?.height, containerBackground: containerStyles?.background, containerBoxShadow: containerStyles?.boxShadow }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' }) }).catch(() => { });
+        // telemetry removed, sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' }) }).catch(() => { });
 
         if (container) {
           const computedStyle = window.getComputedStyle(container);
-          fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'index.html:window.onload', message: 'Container dimensions and styles', data: { offsetWidth: container.offsetWidth, offsetHeight: container.offsetHeight, clientWidth: container.clientWidth, clientHeight: container.clientHeight, borderRadius: computedStyle.borderRadius, background: computedStyle.background, boxShadow: computedStyle.boxShadow, display: computedStyle.display }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' }) }).catch(() => { });
+          // telemetry removed, sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' }) }).catch(() => { });
         }
         if (img) {
-          fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'index.html:window.onload', message: 'Image dimensions', data: { offsetWidth: img.offsetWidth, offsetHeight: img.offsetHeight, naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight, complete: img.complete }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) }).catch(() => { });
+          // telemetry removed, sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) }).catch(() => { });
         }
       }, 1000);
     };

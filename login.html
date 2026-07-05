@@ -717,108 +717,49 @@
       color: #6be0a0;
     }
 
-    /* ── CAMERA STEP ── */
-    .camera-step {
+    /* ── ACCOUNT NUMBER REVEAL ── */
+    .acc-reveal-box {
       display: none;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-      margin: 10px 0;
-    }
-    .camera-step.active { display: flex; }
-
-    #signupVideo {
-      width: 100%;
-      max-width: 320px;
-      height: 220px;
-      object-fit: cover;
+      margin-top: 16px;
+      padding: 18px 16px;
+      background: rgba(0, 188, 212, 0.07);
+      border: 1px solid rgba(0, 188, 212, 0.3);
       border-radius: 14px;
-      border: 2px solid rgba(0, 188, 212, 0.45);
-      background: #000;
-      box-shadow: 0 0 24px rgba(0, 188, 212, 0.18);
-    }
-
-    #signupCanvas { display: none; }
-
-    .camera-hint {
-      font-size: 12px;
-      color: var(--muted);
       text-align: center;
+      animation: fadeDown 0.4s ease both;
     }
-
-    .camera-face-ring {
-      position: relative;
-      width: 100%;
-      max-width: 320px;
-    }
-    .camera-face-ring::after {
-      content: '';
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 120px; height: 150px;
-      border: 2px dashed rgba(0,188,212,0.6);
-      border-radius: 50%;
-      pointer-events: none;
-    }
-
-    .btn-capture {
-      width: 100%;
-      padding: 13px;
-      border: none;
-      border-radius: 13px;
-      background: linear-gradient(135deg, #0097a7, #00bcd4);
-      color: white;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
+    .acc-reveal-box.active { display: block; }
+    .acc-masked {
+      font-size: 22px;
       font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 4px 18px rgba(0,188,212,0.35);
-      transition: transform 0.2s, box-shadow 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    .btn-capture:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,188,212,0.45); }
-    .btn-capture:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    .btn-retake {
-      background: transparent;
-      border: 1px solid rgba(0,188,212,0.4);
+      letter-spacing: 3px;
       color: var(--cyan);
+      font-family: 'DM Sans', monospace;
+      text-shadow: 0 0 12px rgba(0,188,212,0.4);
+      margin-bottom: 4px;
+    }
+    .acc-hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .btn-copy-acc {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 20px;
+      border: 1px solid rgba(0,188,212,0.5);
       border-radius: 10px;
-      padding: 9px 18px;
+      background: rgba(0,188,212,0.08);
+      color: var(--cyan);
       font-family: 'DM Sans', sans-serif;
       font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.25s;
     }
-    .btn-retake:hover { background: rgba(0,188,212,0.08); }
-
-    .face-preview {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-    .face-preview.active { display: flex; }
-    .face-preview img {
-      width: 140px;
-      height: 140px;
-      object-fit: cover;
-      border-radius: 50%;
-      border: 3px solid var(--cyan);
-      box-shadow: 0 0 20px rgba(0,188,212,0.4);
-    }
-    .face-ok-badge {
-      font-size: 13px;
-      color: #6be0a0;
-      background: rgba(46,204,113,0.1);
-      border: 1px solid rgba(46,204,113,0.3);
-      border-radius: 8px;
-      padding: 6px 14px;
-    }
+    .btn-copy-acc:hover { background: rgba(0,188,212,0.18); transform: translateY(-1px); }
+    .btn-copy-acc.copied { background: rgba(46,204,113,0.15); border-color: rgba(46,204,113,0.5); color: #6be0a0; }
 
     .modal-box { max-height: 90vh; overflow-y: auto; }
   </style>
@@ -885,7 +826,7 @@
         <label class="remember">
           <input type="checkbox" id="rememberMe" /> Remember me
         </label>
-        <a href="#" class="forgot" onclick="return false;">Forgot password?</a>
+        <a href="#" class="forgot" onclick="showForgotModal(); return false;">Forgot Account No?</a>
       </div>
 
       <button class="btn-login" id="loginBtn" onclick="handleLogin()">
@@ -916,7 +857,6 @@
     <div class="modal-box">
       <span class="modal-close" onclick="closeSignup()">✕</span>
 
-      <!-- STEP 1: Form -->
       <div id="signupStep1">
         <div class="modal-title">Create Account</div>
         <div class="modal-sub">Fill in your details to get started</div>
@@ -965,43 +905,81 @@
         </div>
 
         <div class="signup-alert" id="signupAlertStep1"></div>
-        <button class="btn-create" id="btnGoToCamera" onclick="goToFaceCapture()" style="margin-top:8px">Next — Capture Face &nbsp;📷</button>
+
+        <!-- Account Number Reveal Box (shown after creation) -->
+        <div class="acc-reveal-box" id="accRevealBox">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase;">Your Account Number</div>
+          <div class="acc-masked" id="accMaskedDisplay"></div>
+          <div class="acc-hint">Last 3 digits shown — copy the full number below</div>
+          <button class="btn-copy-acc" id="btnCopyAcc" onclick="copyAccountNumber()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy Account Number
+          </button>
+        </div>
+
+        <button class="btn-create" id="btnSubmitSignup" onclick="submitSignup()" style="margin-top:8px">Create Account 🏛</button>
+      </div>
+    </div>
+  </div>
+  <!-- FORGOT ACCOUNT MODAL -->
+  <div class="modal-overlay" id="forgotModal">
+    <div class="modal-box">
+      <span class="modal-close" onclick="closeForgotModal()">✕</span>
+      <div class="modal-title">Recover Account</div>
+      <div class="modal-sub">Enter your details to retrieve your Account Number</div>
+
+      <div class="signup-alert" id="forgotAlert" style="display:none; margin-bottom: 12px;"></div>
+
+      <div class="input-group">
+        <label>Full Name</label>
+        <div class="input-wrapper">
+          <span class="icon">👤</span>
+          <input type="text" id="forgotName" placeholder="Enter your registered name">
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <div class="input-wrapper">
+          <span class="icon">🔒</span>
+          <input type="password" id="forgotPass" placeholder="Enter your password">
+        </div>
       </div>
 
-      <!-- STEP 2: Face Capture -->
-      <div id="signupStep2" style="display:none">
-        <div class="modal-title">Face Verification</div>
-        <div class="modal-sub">Position your face in the frame and click Capture</div>
-
-        <!-- Live camera -->
-        <div class="camera-step active" id="cameraLiveSection">
-          <div class="camera-face-ring">
-            <video id="signupVideo" autoplay playsinline muted></video>
-          </div>
-          <p class="camera-hint">📸 Keep your face inside the oval outline and ensure good lighting</p>
-          <button class="btn-capture" id="btnCaptureFace" onclick="captureSignupFace()">📷 Capture My Face</button>
-        </div>
-
-        <!-- Face preview after capture -->
-        <div class="face-preview" id="facePreviewSection">
-          <img id="capturedFaceImg" src="" alt="Captured face" />
-          <div class="face-ok-badge">✅ Face captured successfully!</div>
-          <button class="btn-retake" onclick="retakeSignupFace()">🔄 Retake</button>
-        </div>
-
-        <canvas id="signupCanvas"></canvas>
-
-        <div class="signup-alert" id="signupAlertStep2" style="margin-top:12px"></div>
-
-        <div style="display:flex; gap:10px; margin-top:14px">
-          <button class="btn-retake" style="flex:1" onclick="goBackToStep1()">← Back</button>
-          <button class="btn-create" id="btnSubmitSignup" style="flex:2" onclick="submitSignupWithFace()" disabled>Create Account 🏛</button>
-        </div>
+      <div id="recoveredAccBox" style="display:none; margin: 15px 0; padding: 15px; background: rgba(0, 188, 212, 0.1); border: 1px solid var(--cyan); border-radius: 8px; text-align: center;">
+        <p style="color: var(--cyan); font-size: 0.9rem; margin-bottom: 8px;">Your Account Number:</p>
+        <h3 id="recoveredAccNum" style="color: var(--text); letter-spacing: 2px; margin-bottom: 12px; font-size: 1.5rem;"></h3>
+        <button class="btn-create" onclick="copyRecoveredAcc()" style="padding: 8px; font-size: 0.9rem; margin-top: 0;">Copy to Clipboard</button>
       </div>
+
+      <button class="btn-create" id="btnSubmitForgot" onclick="handleForgotAccount()" style="margin-top:8px">Recover Account 🔍</button>
     </div>
   </div>
 
   <script>
+    function speak(text) {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const msg = new SpeechSynthesisUtterance(text);
+      msg.lang = "en-IN";
+      msg.rate = 1;
+      const setVoiceAndSpeak = () => {
+        const voices = window.speechSynthesis.getVoices();
+        const femaleVoice = voices.find(v => 
+          v.name.includes('Zira') || 
+          v.name.includes('Female') || 
+          v.name.includes('Samantha') || 
+          v.name.includes('Google UK English Female') ||
+          (v.name.includes('Ravi') === false && v.name.includes('Heera'))
+        );
+        if (femaleVoice) msg.voice = femaleVoice;
+        window.speechSynthesis.speak(msg);
+      };
+      if (window.speechSynthesis.getVoices().length === 0) {
+        window.speechSynthesis.onvoiceschanged = setVoiceAndSpeak;
+      } else {
+        setVoiceAndSpeak();
+      }
+    }
     // ─────────────────────────────────────────────
     //  ACCOUNTS — loaded from accounts.json via fetch
     //  Falls back gracefully if file not found
@@ -1020,7 +998,7 @@
     }
 
     // Load accounts
-    fetch('accounts.json')
+    fetch('accounts.json?t=' + Date.now())
       .then(r => r.json())
       .then(data => { accountsDB = data; })
       .catch(() => {
@@ -1040,6 +1018,7 @@
       el.className = `alert ${type}`;
       el.textContent = msg;
       el.style.display = 'block';
+      speak(msg.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').replace(/[\u2700-\u27BF]/gu, ''));
     }
 
     function hideAlert(id) {
@@ -1179,23 +1158,24 @@
     // ─────────────────────────────────────────────
     //  SIGNUP MODAL
     // ─────────────────────────────────────────────
+    let _createdAccNo = null; // stores the real account number for copying
+
     function openSignup() {
       document.getElementById('signupModal').classList.add('open');
-      // Reset to step 1
-      document.getElementById('signupStep1').style.display = 'block';
-      document.getElementById('signupStep2').style.display = 'none';
       hideSignupAlerts && hideSignupAlerts();
       document.getElementById('su_name').value = '';
       document.getElementById('su_age').value  = '';
       document.getElementById('su_pass').value = '';
       document.getElementById('su_pass2').value = '';
-      _capturedB64 = null;
-      stopSignupCamera && stopSignupCamera();
+      document.getElementById('accRevealBox').classList.remove('active');
+      const btn = document.getElementById('btnSubmitSignup');
+      btn.disabled = false;
+      btn.textContent = 'Create Account 🏛';
+      _createdAccNo = null;
       document.getElementById('su_name').focus();
     }
 
     function closeSignup() {
-      stopSignupCamera && stopSignupCamera();
       document.getElementById('signupModal').classList.remove('open');
     }
 
@@ -1207,28 +1187,44 @@
     // ─────────────────────────────────────────────
     //  SIGNUP — STATE
     // ─────────────────────────────────────────────
-    let _signupStream = null;   // active MediaStream
-    let _capturedB64  = null;   // captured face as base64 data-URL
-
     function showSignupAlert1(type, msg) {
       const el = document.getElementById('signupAlertStep1');
       el.className = `signup-alert ${type}`;
       el.textContent = msg;
       el.style.display = 'block';
-    }
-    function showSignupAlert2(type, msg) {
-      const el = document.getElementById('signupAlertStep2');
-      el.className = `signup-alert ${type}`;
-      el.textContent = msg;
-      el.style.display = 'block';
+      speak(msg.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').replace(/[\u2700-\u27BF]/gu, ''));
     }
     function hideSignupAlerts() {
       document.getElementById('signupAlertStep1').style.display = 'none';
-      document.getElementById('signupAlertStep2').style.display = 'none';
     }
 
-    // STEP 1 → STEP 2: validate form fields then open camera
-    async function goToFaceCapture() {
+    // ── Mask account number: xxxxxxx + last 3 digits ─────────────────────────
+    function maskAccountNumber(accNo) {
+      const s = String(accNo);
+      if (s.length <= 3) return s; // too short — show as-is
+      const hidden = 'x'.repeat(Math.max(s.length - 3, 4));
+      return hidden + s.slice(-3);
+    }
+
+    function copyAccountNumber() {
+      if (!_createdAccNo) return;
+      navigator.clipboard.writeText(String(_createdAccNo)).then(() => {
+        const btn = document.getElementById('btnCopyAcc');
+        btn.textContent = '✅ Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy Account Number';
+          btn.classList.remove('copied');
+        }, 2500);
+      }).catch(() => {
+        // Fallback for browsers without clipboard API
+        const el = document.getElementById('btnCopyAcc');
+        el.textContent = '❌ Copy failed — note the number above';
+      });
+    }
+
+    // Direct signup — POST to /open_account without face image
+    async function submitSignup() {
       const name  = document.getElementById('su_name').value.trim();
       const age   = parseInt(document.getElementById('su_age').value.trim(), 10);
       const pass  = document.getElementById('su_pass').value;
@@ -1239,107 +1235,6 @@
       if (!age || age < 18) { showSignupAlert1('error', '⚠️ You must be at least 18 years old.'); return; }
       if (pass.length < 4) { showSignupAlert1('error', '⚠️ Password must be at least 4 characters.'); return; }
       if (pass !== pass2)  { showSignupAlert1('error', '❌ Passwords do not match.'); return; }
-
-      // Switch to step 2
-      document.getElementById('signupStep1').style.display = 'none';
-      document.getElementById('signupStep2').style.display = 'block';
-      _capturedB64 = null;
-      document.getElementById('btnSubmitSignup').disabled = true;
-      document.getElementById('facePreviewSection').classList.remove('active');
-      document.getElementById('cameraLiveSection').classList.add('active');
-
-      // Request camera access
-      await startSignupCamera();
-    }
-
-    async function startSignupCamera() {
-      const video = document.getElementById('signupVideo');
-      stopSignupCamera();
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
-          audio: false
-        });
-        _signupStream = stream;
-        video.srcObject = stream;
-        await video.play();
-        showSignupAlert2('', '');
-        document.getElementById('signupAlertStep2').style.display = 'none';
-      } catch (err) {
-        console.error('Camera error:', err);
-        let msg = '❌ Camera access is required to create your account.';
-        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          msg = '🚫 Camera permission was denied. Please click the camera icon in your browser address bar → Allow → then click "Next — Capture Face" again.';
-        } else if (err.name === 'NotFoundError') {
-          msg = '📷 No camera found. Please connect a camera and try again.';
-        }
-        showSignupAlert2('error', msg);
-        document.getElementById('btnCaptureFace').disabled = true;
-      }
-    }
-
-    function stopSignupCamera() {
-      if (_signupStream) {
-        _signupStream.getTracks().forEach(t => t.stop());
-        _signupStream = null;
-      }
-      const video = document.getElementById('signupVideo');
-      video.srcObject = null;
-    }
-
-    function captureSignupFace() {
-      const video  = document.getElementById('signupVideo');
-      const canvas = document.getElementById('signupCanvas');
-      if (!video.videoWidth) {
-        showSignupAlert2('error', '⚠️ Camera not ready yet — please wait a moment and try again.');
-        return;
-      }
-      canvas.width  = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      // Mirror the drawn image so it looks natural (selfie-style)
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(video, 0, 0);
-      ctx.setTransform(1,0,0,1,0,0);
-
-      _capturedB64 = canvas.toDataURL('image/jpeg', 0.92);
-
-      // Show preview
-      document.getElementById('capturedFaceImg').src = _capturedB64;
-      document.getElementById('cameraLiveSection').classList.remove('active');
-      document.getElementById('facePreviewSection').classList.add('active');
-      document.getElementById('btnSubmitSignup').disabled = false;
-      stopSignupCamera();
-    }
-
-    function retakeSignupFace() {
-      _capturedB64 = null;
-      document.getElementById('btnSubmitSignup').disabled = true;
-      document.getElementById('facePreviewSection').classList.remove('active');
-      document.getElementById('cameraLiveSection').classList.add('active');
-      document.getElementById('btnCaptureFace').disabled = false;
-      startSignupCamera();
-    }
-
-    function goBackToStep1() {
-      stopSignupCamera();
-      _capturedB64 = null;
-      document.getElementById('signupStep2').style.display = 'none';
-      document.getElementById('signupStep1').style.display = 'block';
-      hideSignupAlerts();
-    }
-
-    // Final submission — POST to /open_account → saves to MongoDB
-    async function submitSignupWithFace() {
-      if (!_capturedB64) {
-        showSignupAlert2('error', '⚠️ Please capture your face first.');
-        return;
-      }
-
-      const name  = document.getElementById('su_name').value.trim();
-      const age   = parseInt(document.getElementById('su_age').value.trim(), 10);
-      const pass  = document.getElementById('su_pass').value;
 
       const btn = document.getElementById('btnSubmitSignup');
       btn.disabled = true;
@@ -1355,8 +1250,7 @@
             income: 0,
             account_type: 'Savings',
             location: '',
-            pass,
-            face_image: _capturedB64
+            pass
           })
         });
 
@@ -1364,27 +1258,33 @@
 
         if (data.status === 'success') {
           const accNo = data.account_number;
+          _createdAccNo = accNo;
 
           // Reflect new account in local in-memory DB so login works immediately
-          accountsDB[accNo] = { name, pass, balance: 0.0, history: [] };
+          accountsDB[String(accNo)] = { name, pass, balance: 0.0, history: [] };
 
-          showSignupAlert2('success',
-            `🎉 Account created!\nAccount No: ${accNo}\nFace enrolled ✅\n\nSave your account number!`);
+          // Show masked account number with copy button
+          document.getElementById('accMaskedDisplay').textContent = maskAccountNumber(accNo);
+          document.getElementById('accRevealBox').classList.add('active');
+          showSignupAlert1('success', `🎉 Account created! Use the Copy button below to save your account number.`);
 
+          btn.textContent = '✅ Account Created';
+
+          // Pre-fill login fields after a short delay
           setTimeout(() => {
-            closeSignup();
-            document.getElementById('accNum').value = accNo;
+            document.getElementById('accNum').value = String(accNo);
             document.getElementById('accPass').value = pass;
+            closeSignup();
             showAlert('loginAlert', 'success',
-              `🎉 Welcome, ${name}! Account No: ${accNo} — pre-filled below. Sign in now!`);
-          }, 3000);
+              `🎉 Welcome, ${name}! Your account number is pre-filled. Sign in now!`);
+          }, 3500);
         } else {
-          showSignupAlert2('error', data.message || '❌ Account creation failed. Please try again.');
+          showSignupAlert1('error', data.message || '❌ Account creation failed. Please try again.');
           btn.disabled = false;
           btn.textContent = 'Create Account 🏛';
         }
       } catch (err) {
-        showSignupAlert2('error', '❌ Server error. Make sure the backend is running and try again.');
+        showSignupAlert1('error', '❌ Server error. Make sure the backend is running and try again.');
         btn.disabled = false;
         btn.textContent = 'Create Account 🏛';
       }
@@ -1535,6 +1435,74 @@
         opacity: rand(0.1, 0.4)
       });
       particlesEl.appendChild(p);
+    }
+
+    // ─────────────────────────────────────────────
+    //  FORGOT ACCOUNT
+    // ─────────────────────────────────────────────
+    let hideAccountTimeout = null;
+
+    function showForgotModal() {
+      document.getElementById('forgotModal').classList.add('active');
+      document.getElementById('forgotName').value = '';
+      document.getElementById('forgotPass').value = '';
+      document.getElementById('forgotAlert').style.display = 'none';
+      document.getElementById('recoveredAccBox').style.display = 'none';
+      if(hideAccountTimeout) clearTimeout(hideAccountTimeout);
+    }
+
+    function closeForgotModal() {
+      document.getElementById('forgotModal').classList.remove('active');
+      if(hideAccountTimeout) clearTimeout(hideAccountTimeout);
+    }
+
+    function showForgotAlert(type, msg) {
+      const el = document.getElementById('forgotAlert');
+      el.className = `signup-alert ${type}`;
+      el.innerHTML = msg;
+      el.style.display = 'block';
+      speak(msg.replace(/<[^>]*>?/gm, '').replace(/[\u{1F300}-\u{1F9FF}]/gu, '').replace(/[\u2700-\u27BF]/gu, ''));
+    }
+
+    function handleForgotAccount() {
+      const name = document.getElementById('forgotName').value.trim().toLowerCase();
+      const pass = document.getElementById('forgotPass').value;
+      
+      if (!name || !pass) {
+        showForgotAlert('error', '⚠️ Please enter both Name and Password.');
+        return;
+      }
+      
+      let foundAcc = null;
+      for (const [accNo, details] of Object.entries(accountsDB)) {
+        if (details.name.toLowerCase() === name && details.pass === pass) {
+          foundAcc = accNo;
+          break;
+        }
+      }
+      
+      if (foundAcc) {
+        showForgotAlert('success', '✅ Account verified!');
+        document.getElementById('recoveredAccNum').textContent = foundAcc;
+        document.getElementById('recoveredAccBox').style.display = 'block';
+        
+        // Hide after 20 seconds
+        if(hideAccountTimeout) clearTimeout(hideAccountTimeout);
+        hideAccountTimeout = setTimeout(() => {
+          document.getElementById('recoveredAccBox').style.display = 'none';
+          showForgotAlert('error', '⏳ Account number hidden for security.');
+        }, 20000);
+      } else {
+        showForgotAlert('error', '❌ No matching account found with that Name and Password.');
+        document.getElementById('recoveredAccBox').style.display = 'none';
+      }
+    }
+
+    function copyRecoveredAcc() {
+      const acc = document.getElementById('recoveredAccNum').textContent;
+      navigator.clipboard.writeText(acc).then(() => {
+        showForgotAlert('success', '📋 Account Number copied to clipboard!');
+      });
     }
   </script>
 </body>
