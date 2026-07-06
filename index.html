@@ -1684,19 +1684,7 @@ message..." />
         };
 
         try {
-
-          // Capture face image via camera before submitting
-          showMessage(pendingResponseId, "📷 Capturing face image... Please look at your camera.");
-          let faceImage = "";
-          try {
-            faceImage = await captureFrameB64();
-          } catch (camErr) {
-            showMessage(pendingResponseId, "❌ Camera access denied or failed. Please allow camera access and try again.");
-            pendingAccountData = null;
-            pendingResponseId = null;
-            return;
-          }
-          data.face_image = faceImage;
+          data.face_image = "";
 
           fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
             method: 'POST',
@@ -2490,21 +2478,7 @@ message..." />
         };
 
         try {
-          // Capture face image via camera before submitting
-          showMessage(responseId, "📷 Capturing face image... Please look at your camera.");
-          let faceImage = "";
-          try {
-            // Always force-prompt for open_account so camera modal always shows
-            faceImage = await captureFrameB64("Camera access is required to capture your face for account registration. Please click Allow.", true);
-          } catch (camErr) {
-            if (camErr.message === 'Camera permission denied by user.') {
-              showMessage(responseId, "❌ Camera access was denied. Please click Allow when the camera prompt appears.");
-            } else {
-              showMessage(responseId, "❌ Camera failed to start. Please check your camera is connected and not blocked in browser settings, then try again.");
-            }
-            return;
-          }
-          data.face_image = faceImage;
+          data.face_image = "";
 
           // Log: submitting account creation request
           fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', {
