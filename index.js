@@ -411,13 +411,7 @@ async function submitWithCamera(data, responseId) {
   if (!responseEl) return;
 
   try {
-    showMessage(responseId, '📷 Capturing face...');
-    const faceImage = await captureFrameB64();
-    if (!faceImage) {
-      showMessage(responseId, '❌ Camera not available. Please allow camera access and refresh.');
-      return;
-    }
-    data.face_image = faceImage;
+    showMessage(responseId, '⏳ Creating your account...');
 
     const res = await fetch('/open_account', {
       method: 'POST',
@@ -426,15 +420,31 @@ async function submitWithCamera(data, responseId) {
     });
 
     const json = await res.json();
-    let message = json.message || 'Account opened successfully.';
-    if (json.account_number) {
-      message += `\nAccount Number: ${json.account_number}`;
+
+    if (json.status === 'success' && json.account_number) {
+      const accStr = String(json.account_number);
+      // Mask: show xxxxxxx + last 3 digits
+      const maskedAcc = accStr.length > 3
+        ? 'x'.repeat(Math.max(accStr.length - 3, 4)) + accStr.slice(-3)
+        : accStr;
+      const copyBtnId = 'copyAccBtn2_' + Date.now();
+      let html = json.message || 'Account created successfully!';
+      html += `<br><br><div style='margin-top:10px;padding:14px;background:rgba(0,188,212,0.06);border:1px solid rgba(0,188,212,0.25);border-radius:10px;'>`;
+      html += `<div style='font-size:13px;color:#555;margin-bottom:6px;'>Account Number</div>`;
+      html += `<div style='font-size:22px;font-weight:700;letter-spacing:3px;color:#00bcd4;font-family:monospace;margin-bottom:6px;'>${maskedAcc}</div>`;
+      html += `<div style='font-size:11px;color:#888;margin-bottom:12px;'>Last 3 digits shown — copy full number below</div>`;
+      html += `<button id='${copyBtnId}' data-accno='${accStr}' onclick="(function(btn){navigator.clipboard.writeText(btn.dataset.accno).then(()=>{btn.textContent='✅ Copied!';btn.style.color='#2ecc71';setTimeout(()=>{btn.textContent='📋 Copy Account Number';btn.style.color='';},2500)}).catch(()=>{btn.textContent='❌ Copy failed'});})(document.getElementById('${copyBtnId}'))" style='padding:8px 18px;border:1px solid rgba(0,188,212,0.5);border-radius:8px;background:rgba(0,188,212,0.08);color:#00bcd4;font-size:13px;font-weight:600;cursor:pointer;'>📋 Copy Account Number</button>`;
+      html += `</div>`;
+      responseEl.innerHTML = html;
+      responseEl.className = 'response success';
+      responseEl.style.display = 'block';
+    } else {
+      showMessage(responseId, json.message || '❌ Account creation failed. Please try again.');
     }
-    showMessage(responseId, message);
 
   } catch (err) {
-    console.error('Error during face capture or account creation:', err);
-    showMessage(responseId, 'An error occurred while capturing your face or opening the account. Please try again.');
+    console.error('Error during account creation:', err);
+    showMessage(responseId, 'An error occurred while creating the account. Please try again.');
   } finally {
     pendingAccountData = null;
     pendingResponseId = null;
@@ -526,15 +536,26 @@ async function submit(action, responseId) {
         })
       }).catch(() => ({}));
 
-      // Display success message with account details
+      // Display success message with account details (account number masked)
+      const accNo = json.account_number;
+      const accStr = String(accNo);
+      // Mask: show xxxxxxx + last 3 digits
+      const maskedAcc = accStr.length > 3
+        ? 'x'.repeat(Math.max(accStr.length - 3, 4)) + accStr.slice(-3)
+        : accStr;
+
       let successMessage = json.message || "Account opened successfully.";
-      if (json.account_number) {
+      if (accNo) {
+        const copyBtnId = 'copyAccBtn_' + Date.now();
         successMessage += "<br><br><strong style='font-size: 16px; color: #0097a7;'>Account Details:</strong><br>";
-        successMessage += `<div style='margin-top: 10px; padding: 10px; background: white; border-radius: 5px;'>`;
-        successMessage += `Account Number: <strong style='color: #00bcd4; font-size: 18px;'>${json.account_number}</strong><br>`;
+        successMessage += `<div style='margin-top: 10px; padding: 14px; background: rgba(0,188,212,0.06); border:1px solid rgba(0,188,212,0.25); border-radius: 10px;'>`;
+        successMessage += `<div style='font-size:13px;color:#555;margin-bottom:6px;'>Account Number</div>`;
+        successMessage += `<div style='font-size:22px;font-weight:700;letter-spacing:3px;color:#00bcd4;font-family:monospace;margin-bottom:6px;'>${maskedAcc}</div>`;
+        successMessage += `<div style='font-size:11px;color:#888;margin-bottom:12px;'>Last 3 digits shown — copy full number below</div>`;
+        successMessage += `<button id='${copyBtnId}' data-accno='${accStr}' onclick="(function(btn){navigator.clipboard.writeText(btn.dataset.accno).then(()=>{btn.textContent='✅ Copied!';btn.style.color='#2ecc71';setTimeout(()=>{btn.textContent='📋 Copy Account Number';btn.style.color='';},2500)}).catch(()=>{btn.textContent='❌ Copy failed'});})(document.getElementById('${copyBtnId}'))" style='padding:8px 18px;border:1px solid rgba(0,188,212,0.5);border-radius:8px;background:rgba(0,188,212,0.08);color:#00bcd4;font-size:13px;font-weight:600;cursor:pointer;'>📋 Copy Account Number</button>`;
+        successMessage += `<br><br>`;
         successMessage += `Name: ${json.name || data.name}<br>`;
         successMessage += `Age: ${json.age || data.age} years<br>`;
-        successMessage += `Income: ₹${json.income || data.income}<br>`;
         successMessage += `Account Type: ${json.account_type || data.account_type}`;
         successMessage += `</div>`;
       }
@@ -543,7 +564,7 @@ async function submit(action, responseId) {
         responseEl.innerHTML = successMessage;
         responseEl.className = 'response success';
         responseEl.style.display = 'block';
-        // Auto-hide after 15 seconds (longer for account details)
+        // Auto-hide after 30 seconds (longer for account details)
         if (messageTimeouts[responseId]) {
           clearTimeout(messageTimeouts[responseId]);
         }
@@ -551,7 +572,7 @@ async function submit(action, responseId) {
           responseEl.innerHTML = '';
           responseEl.style.display = 'none';
           delete messageTimeouts[responseId];
-        }, 15000);
+        }, 30000);
       }
       if (json.message) speak(json.message);
 
@@ -564,7 +585,7 @@ async function submit(action, responseId) {
       document.getElementById("open_pass").value = '';
     } catch (error) {
       console.error("Error:", error);
-      showMessage(responseId, "An error occurred while processing your request. Please check your camera and try again.");
+      showMessage(responseId, "An error occurred while processing your request. Please try again.");
     }
     return;
   }
@@ -894,7 +915,7 @@ async function getHistory() {
     showMessage("history_result", `Showing ${validTransactions.length} complete transaction(s) with full details.`);
     speak(`Showing your complete transaction history with ${validTransactions.length} transactions.`);
 
-    fetch('http://127.0.0.1:7242/ingest/78828ae1-3b30-43dc-9506-c4978ab24e2c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'index.html:getHistory', message: 'Displaying transaction history', data: { transactionCount: validTransactions.length, sampleTx: validTransactions[0] }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) }).catch(() => { });
+    // telemetry removed, sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) }).catch(() => { });
 
     // Get account name from response
     const accountName = data.account_name || "";

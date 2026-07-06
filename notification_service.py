@@ -98,6 +98,7 @@ def send_email(to_email: str, subject: str, html_body: str) -> bool:
     """
     if not EMAIL_API_KEY or not SENDER_EMAIL:
         logger.warning("Email API credentials not configured. Skipping email transmission.")
+        print("⚠️  [Email] API credentials missing — set EMAIL_API_KEY and SENDER_EMAIL in .env")
         return False
     try:
         url = "https://api.brevo.com/v3/smtp/email"
@@ -118,13 +119,21 @@ def send_email(to_email: str, subject: str, html_body: str) -> bool:
         
         if response.status_code in [200, 201, 202]:
             logger.info(f"📧 Email sent successfully to {to_email} via Brevo API")
+            print(f"📧 [Email] Sent successfully to {to_email}")
             return True
         else:
-            logger.error(f"Email API rejected the request: {response.status_code} - {response.text}")
+            error_detail = response.text
+            logger.error(f"Email API rejected the request: {response.status_code} - {error_detail}")
+            print(f"❌ [Email] Brevo API error {response.status_code}: {error_detail}")
+            # Common causes:
+            # 401 → Invalid API key
+            # 400 → Sender email not verified in Brevo
+            # 403 → Account suspended
             return False
             
     except Exception as e:
         logger.error(f"Email HTTP API transmission failed: {e}")
+        print(f"❌ [Email] Exception during send: {e}")
         return False
 
 

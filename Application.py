@@ -1,3 +1,5 @@
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
 from flask import Flask, request, jsonify, send_file
 from bank_logic import create_account, deposit, withdraw as withdraw_logic, check_balance, close_account, load_data, save_data
 from face_auth import verify_face_image
@@ -270,24 +272,19 @@ def open_account():
             "message": "❌ You must be at least 18 years old to open an account."
         })
 
-    face_image = data.get("face_image", "")
-    if verify_face_image(data["name"], face_image, enroll=True):
-        result = create_account(data)
-        account_number = result.get("account_number", "N/A")
-        print(f"✅ Face captured and enrolled for {data['name']}. Account Number: {account_number}")
-        return jsonify({
-            "status": "success",
-            "message": f"✅ Face captured for {data['name']}. Account created successfully!",
-            "account_number": account_number,
-            "name": data["name"],
-            "age": data.get("age", 18),
-            "income": data.get("income", 0),
-            "account_type": data.get("account_type", "Savings"),
-            "celebrate": True
-        })
+    # Create account directly — no face authentication required at signup
+    result = create_account(data)
+    account_number = result.get("account_number", "N/A")
+    print(f"✅ Account created for {data['name']}. Account Number: {account_number}")
     return jsonify({
-        "status": "fail",
-        "message": "❌ Face not detected. Please allow camera access and try again."
+        "status": "success",
+        "message": f"✅ Account created successfully for {data['name']}!",
+        "account_number": account_number,
+        "name": data["name"],
+        "age": data.get("age", 18),
+        "income": data.get("income", 0),
+        "account_type": data.get("account_type", "Savings"),
+        "celebrate": True
     })
 
 @app.route("/deposit", methods=["POST"])
