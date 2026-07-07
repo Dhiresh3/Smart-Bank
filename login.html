@@ -904,6 +904,16 @@
           </div>
         </div>
 
+        <div class="field">
+          <label for="su_email">Email Address</label>
+          <div class="input-wrap">
+            <input type="email" id="su_email" placeholder="your@email.com (for account recovery)" />
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="4" width="20" height="16" rx="3"/><path d="M2 7l10 7 10-7"/>
+            </svg>
+          </div>
+        </div>
+
         <div class="signup-alert" id="signupAlertStep1"></div>
 
         <!-- Account Number Reveal Box (shown after creation) -->
@@ -925,33 +935,57 @@
   <div class="modal-overlay" id="forgotModal">
     <div class="modal-box">
       <span class="modal-close" onclick="closeForgotModal()">✕</span>
-      <div class="modal-title">Recover Account</div>
-      <div class="modal-sub">Enter your details to retrieve your Account Number</div>
+      <div class="modal-title">🔍 Recover Account Number</div>
+      <div class="modal-sub">Verify your identity to retrieve your Account Number</div>
 
       <div class="signup-alert" id="forgotAlert" style="display:none; margin-bottom: 12px;"></div>
 
-      <div class="input-group">
+      <div class="field">
         <label>Full Name</label>
-        <div class="input-wrapper">
-          <span class="icon">👤</span>
-          <input type="text" id="forgotName" placeholder="Enter your registered name">
+        <div class="input-wrap">
+          <input type="text" id="forgotName" placeholder="Enter your registered full name" />
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.5 8.5 0 0 1 13 0"/>
+          </svg>
         </div>
       </div>
-      <div class="input-group">
+
+      <div class="field">
+        <label>Email Address</label>
+        <div class="input-wrap">
+          <input type="email" id="forgotEmail" placeholder="Enter your registered email" />
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="4" width="20" height="16" rx="3"/><path d="M2 7l10 7 10-7"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="field">
         <label>Password</label>
-        <div class="input-wrapper">
-          <span class="icon">🔒</span>
-          <input type="password" id="forgotPass" placeholder="Enter your password">
+        <div class="input-wrap">
+          <input type="password" id="forgotPass" placeholder="Enter your password" />
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
         </div>
       </div>
 
-      <div id="recoveredAccBox" style="display:none; margin: 15px 0; padding: 15px; background: rgba(0, 188, 212, 0.1); border: 1px solid var(--cyan); border-radius: 8px; text-align: center;">
-        <p style="color: var(--cyan); font-size: 0.9rem; margin-bottom: 8px;">Your Account Number:</p>
-        <h3 id="recoveredAccNum" style="color: var(--text); letter-spacing: 2px; margin-bottom: 12px; font-size: 1.5rem;"></h3>
-        <button class="btn-create" onclick="copyRecoveredAcc()" style="padding: 8px; font-size: 0.9rem; margin-top: 0;">Copy to Clipboard</button>
+      <!-- Account Number reveal box -->
+      <div id="recoveredAccBox" style="display:none; margin:16px 0 8px; padding:18px; background:linear-gradient(135deg,rgba(0,188,212,0.12),rgba(0,100,150,0.18)); border:1.5px solid rgba(0,188,212,0.5); border-radius:14px; text-align:center;">
+        <p style="color:rgba(0,188,212,0.9); font-size:0.78rem; letter-spacing:2px; text-transform:uppercase; margin-bottom:8px;">Your Account Number</p>
+        <div style="font-size:2rem; font-weight:700; letter-spacing:6px; color:#fff; font-family:monospace; margin-bottom:4px;" id="recoveredAccMasked"></div>
+        <div style="font-size:0.75rem; color:rgba(255,255,255,0.45); margin-bottom:12px;">Shown for <span id="accCountdown" style="color:rgba(0,188,212,0.9);font-weight:600;">20</span>s — save it now!</div>
+        <input type="text" id="recoveredAccNum" style="opacity:0;position:absolute;pointer-events:none;" readonly />
+        <button onclick="copyRecoveredAcc()" style="background:linear-gradient(135deg,#00bcd4,#0097a7);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:0.9rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'" id="btnCopyRecovered">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy Account Number
+        </button>
+        <div style="margin-top:10px;height:4px;border-radius:4px;background:rgba(255,255,255,0.1);overflow:hidden;">
+          <div id="accTimerBar" style="height:100%;width:100%;background:linear-gradient(90deg,#00bcd4,#26c6da);transition:width 1s linear;"></div>
+        </div>
       </div>
 
-      <button class="btn-create" id="btnSubmitForgot" onclick="handleForgotAccount()" style="margin-top:8px">Recover Account 🔍</button>
+      <button class="btn-create" id="btnSubmitForgot" onclick="handleForgotAccount()" style="margin-top:8px;">Verify &amp; Recover 🔐</button>
     </div>
   </div>
 
@@ -1259,9 +1293,10 @@
         if (data.status === 'success') {
           const accNo = data.account_number;
           _createdAccNo = accNo;
+          const email = (document.getElementById('su_email').value || '').trim().toLowerCase();
 
           // Reflect new account in local in-memory DB so login works immediately
-          accountsDB[String(accNo)] = { name, pass, balance: 0.0, history: [] };
+          accountsDB[String(accNo)] = { name, pass, email, balance: 0.0, history: [] };
 
           // Show masked account number with copy button
           document.getElementById('accMaskedDisplay').textContent = maskAccountNumber(accNo);
@@ -1444,16 +1479,20 @@
 
     function showForgotModal() {
       document.getElementById('forgotModal').classList.add('active');
-      document.getElementById('forgotName').value = '';
-      document.getElementById('forgotPass').value = '';
+      document.getElementById('forgotName').value  = '';
+      document.getElementById('forgotEmail').value = '';
+      document.getElementById('forgotPass').value  = '';
       document.getElementById('forgotAlert').style.display = 'none';
       document.getElementById('recoveredAccBox').style.display = 'none';
-      if(hideAccountTimeout) clearTimeout(hideAccountTimeout);
+      if (hideAccountTimeout) clearTimeout(hideAccountTimeout);
+      if (window._forgotCountdownInterval) clearInterval(window._forgotCountdownInterval);
+      speak('Please enter your name, email and password to recover your account number.');
     }
 
     function closeForgotModal() {
       document.getElementById('forgotModal').classList.remove('active');
-      if(hideAccountTimeout) clearTimeout(hideAccountTimeout);
+      if (hideAccountTimeout) clearTimeout(hideAccountTimeout);
+      if (window._forgotCountdownInterval) clearInterval(window._forgotCountdownInterval);
     }
 
     function showForgotAlert(type, msg) {
@@ -1465,43 +1504,94 @@
     }
 
     function handleForgotAccount() {
-      const name = document.getElementById('forgotName').value.trim().toLowerCase();
-      const pass = document.getElementById('forgotPass').value;
-      
-      if (!name || !pass) {
-        showForgotAlert('error', '⚠️ Please enter both Name and Password.');
+      const name    = document.getElementById('forgotName').value.trim().toLowerCase();
+      const email   = document.getElementById('forgotEmail').value.trim().toLowerCase();
+      const pass    = document.getElementById('forgotPass').value;
+
+      if (!name || !email || !pass) {
+        showForgotAlert('error', '⚠️ Please fill in all three fields: Name, Email and Password.');
         return;
       }
-      
+
+      const btn = document.getElementById('btnSubmitForgot');
+      btn.disabled = true;
+      btn.textContent = 'Verifying...';
+
+      // Search accountsDB (loaded from backend via /accounts.json)
       let foundAcc = null;
       for (const [accNo, details] of Object.entries(accountsDB)) {
-        if (details.name.toLowerCase() === name && details.pass === pass) {
+        const nameMatch  = (details.name  || '').toLowerCase() === name;
+        const passMatch  = (details.pass  || '')               === pass;
+        const emailMatch = !details.email || (details.email || '').toLowerCase() === email;
+        if (nameMatch && passMatch && emailMatch) {
           foundAcc = accNo;
           break;
         }
       }
-      
+
+      btn.disabled = false;
+      btn.textContent = 'Verify & Recover 🔐';
+
       if (foundAcc) {
-        showForgotAlert('success', '✅ Account verified!');
-        document.getElementById('recoveredAccNum').textContent = foundAcc;
+        showForgotAlert('success', '✅ Identity verified! Your account number is shown below.');
+        speak('Identity verified. Your account number is displayed. Copy it now.');
+
+        // Show masked number
+        const masked = maskAccountNumber(foundAcc);
+        document.getElementById('recoveredAccMasked').textContent = masked;
+        document.getElementById('recoveredAccNum').value = foundAcc; // hidden input stores real number
         document.getElementById('recoveredAccBox').style.display = 'block';
-        
-        // Hide after 20 seconds
-        if(hideAccountTimeout) clearTimeout(hideAccountTimeout);
-        hideAccountTimeout = setTimeout(() => {
-          document.getElementById('recoveredAccBox').style.display = 'none';
-          showForgotAlert('error', '⏳ Account number hidden for security.');
-        }, 20000);
+
+        // 20-second countdown
+        let timeLeft = 20;
+        const countdownEl = document.getElementById('accCountdown');
+        const timerBar    = document.getElementById('accTimerBar');
+        countdownEl.textContent = timeLeft;
+        timerBar.style.width = '100%';
+
+        if (hideAccountTimeout) clearTimeout(hideAccountTimeout);
+        if (window._forgotCountdownInterval) clearInterval(window._forgotCountdownInterval);
+
+        window._forgotCountdownInterval = setInterval(() => {
+          timeLeft--;
+          countdownEl.textContent = timeLeft;
+          timerBar.style.width = (timeLeft / 20 * 100) + '%';
+          if (timeLeft <= 0) {
+            clearInterval(window._forgotCountdownInterval);
+            document.getElementById('recoveredAccBox').style.display = 'none';
+            showForgotAlert('error', '⏳ Account number hidden for security. Verify again if needed.');
+            speak('Account number hidden for security.');
+          }
+        }, 1000);
+
       } else {
-        showForgotAlert('error', '❌ No matching account found with that Name and Password.');
+        showForgotAlert('error', '❌ No matching account found. Please check your Name, Email and Password.');
+        speak('No matching account found. Please check your details and try again.');
         document.getElementById('recoveredAccBox').style.display = 'none';
       }
     }
 
     function copyRecoveredAcc() {
-      const acc = document.getElementById('recoveredAccNum').textContent;
+      const acc = document.getElementById('recoveredAccNum').value;
+      if (!acc) return;
       navigator.clipboard.writeText(acc).then(() => {
+        const btn = document.getElementById('btnCopyRecovered');
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Copied!';
+        btn.style.background = 'linear-gradient(135deg,#4caf50,#388e3c)';
         showForgotAlert('success', '📋 Account Number copied to clipboard!');
+        speak('Account number copied to clipboard.');
+        setTimeout(() => {
+          btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy Account Number';
+          btn.style.background = 'linear-gradient(135deg,#00bcd4,#0097a7)';
+        }, 2500);
+      }).catch(() => {
+        // fallback: select the text
+        const el = document.getElementById('recoveredAccNum');
+        el.style.position = 'static';
+        el.style.opacity  = '1';
+        el.select();
+        document.execCommand('copy');
+        showForgotAlert('success', '📋 Copied using fallback!');
       });
     }
   </script>
