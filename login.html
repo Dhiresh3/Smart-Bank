@@ -762,6 +762,95 @@
     .btn-copy-acc.copied { background: rgba(46,204,113,0.15); border-color: rgba(46,204,113,0.5); color: #6be0a0; }
 
     .modal-box { max-height: 90vh; overflow-y: auto; }
+
+    /* ═══════════════════════════════════════════
+       RESPONSIVE — Mobile First
+    ═══════════════════════════════════════════ */
+
+    /* ── Very small phones (≤ 390px) ── */
+    @media (max-width: 390px) {
+      html, body { overflow-y: auto; }
+      .scene { align-items: flex-start; padding: 12px 0 40px; position: relative; min-height: 100vh; }
+      .card { width: 100%; border-radius: 0; padding: 28px 18px 28px; min-height: 100vh; animation: none; }
+      .logo-text { font-size: 17px; }
+      .heading { font-size: 20px; }
+      .modal-box { width: 96%; padding: 28px 16px 24px; border-radius: 16px; }
+      .modal-title { font-size: 18px; }
+      .options { flex-direction: column; align-items: flex-start; gap: 10px; }
+    }
+
+    /* ── Small phones (≤ 480px) ── */
+    @media (max-width: 480px) {
+      html, body { overflow-y: auto; }
+      .scene { align-items: flex-start; padding: 16px 0 50px; position: relative; min-height: 100vh; }
+      .card {
+        width: calc(100% - 24px);
+        max-width: 440px;
+        margin: 0 auto;
+        border-radius: 20px;
+        padding: 32px 20px 28px;
+        animation: none;
+        transform: none !important;
+      }
+      .logo-text { font-size: 18px; }
+      .logo-sub { font-size: 9px; letter-spacing: 2px; }
+      .heading { font-size: 22px; }
+      .subhead { font-size: 12px; margin-bottom: 20px; }
+      input[type="text"], input[type="password"], input[type="email"] { font-size: 14px; padding: 12px 12px 12px 40px; }
+      .btn-login, .btn-signup, .btn-create { font-size: 14px; padding: 13px; }
+      .options { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .modal-overlay { align-items: flex-end; }
+      .modal-box {
+        width: 100%;
+        max-height: 92vh;
+        border-radius: 22px 22px 0 0;
+        padding: 30px 18px 28px;
+        overflow-y: auto;
+      }
+      .modal-title { font-size: 19px; }
+      .modal-sub { font-size: 12px; }
+      .acc-masked { font-size: 18px; letter-spacing: 2px; }
+    }
+
+    /* ── Tablets & large phones (481px – 768px) ── */
+    @media (min-width: 481px) and (max-width: 768px) {
+      html, body { overflow-y: auto; }
+      .scene { align-items: center; padding: 24px 0; position: relative; min-height: 100vh; }
+      .card {
+        width: calc(100% - 40px);
+        max-width: 480px;
+        border-radius: 22px;
+        padding: 40px 32px 34px;
+        animation: none;
+        transform: none !important;
+      }
+      .modal-overlay { align-items: center; }
+      .modal-box { width: calc(100% - 32px); max-width: 460px; padding: 36px 28px 30px; }
+    }
+
+    /* ── Medium tablets (769px – 1024px) ── */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .card { width: 420px; }
+      .modal-box { width: 380px; }
+    }
+
+    /* ── Touch device: disable 3D hover tilt ── */
+    @media (hover: none) {
+      .card { animation: none; transform: none !important; }
+      .btn-login:hover, .btn-signup:hover, .btn-create:hover { transform: none; }
+    }
+
+    /* ── Landscape phones ── */
+    @media (max-height: 500px) and (orientation: landscape) {
+      html, body { overflow-y: auto; }
+      .scene { align-items: flex-start; padding: 10px 0 30px; position: relative; min-height: 100vh; }
+      .card { padding: 20px 24px; animation: none; transform: none !important; }
+      .logo-wrap { margin-bottom: 16px; }
+      .heading { font-size: 20px; }
+      .subhead { margin-bottom: 14px; }
+      .field { margin-bottom: 10px; }
+      .options { margin-bottom: 14px; }
+    }
   </style>
 </head>
 

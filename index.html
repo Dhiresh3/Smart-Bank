@@ -5,9 +5,6 @@
   <title>Skiller SmartBank </title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <center>
-    <h1 style="color: red; font-family: Arial, sans-serif; margin: 10px 0;">SKiller SmartBank</h1>
-  </center>
   <style>
     .form-group {
       margin-bottom: 15px;
@@ -564,6 +561,108 @@
       50% {
         box-shadow: 0 0 70px rgba(0, 220, 240, 0.9), 0 0 120px rgba(0, 200, 220, 0.7), inset 0 0 50px rgba(0, 150, 180, 0.6);
       }
+    }
+
+    /* ═══════════════════════════════════════════
+       RESPONSIVE — Mobile First
+    ═══════════════════════════════════════════ */
+
+    /* ── Base: make all inputs/cards full-width on small screens ── */
+    @media (max-width: 600px) {
+      body { font-size: 14px; }
+
+      /* Navbar: smaller text, wrap naturally */
+      .navbar { padding: 10px 8px; gap: 6px; }
+      .navbar button { padding: 8px 12px; font-size: 12px; border-radius: 8px; }
+
+      /* Sections */
+      .section { padding: 16px 12px; }
+
+      /* Inputs & buttons full width */
+      input, button.action, select { width: 96%; font-size: 14px; padding: 10px; margin: 8px auto; }
+
+      /* Cards full width */
+      .card { width: 96%; max-width: 100%; padding: 16px; margin: 12px auto; }
+
+      /* History table: horizontal scroll */
+      .history-table { width: 100%; font-size: 12px; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .history-table th, .history-table td { padding: 8px 10px; font-size: 12px; white-space: nowrap; }
+
+      /* Chat boxes */
+      .chat-box { width: 98%; height: 320px; }
+      .ai-chat-box { width: 98%; }
+      .ai-chat-messages { max-height: 200px; }
+
+      /* Logo container */
+      .logo-container { padding: 16px; max-width: 100%; }
+      .logo-container img { width: 180px; }
+
+      /* Forms inside sections */
+      .form-group { width: 96%; }
+
+      /* Modals */
+      .modal-content { width: 94%; padding: 20px 16px; border-radius: 12px; }
+
+      /* Response messages */
+      .response { width: 96%; }
+
+      /* Footer */
+      footer { font-size: 12px; padding: 14px 12px; }
+      footer p { font-size: 11px; }
+
+      /* Headings */
+      h1 { font-size: 20px !important; }
+      h2 { font-size: 18px; }
+      h3 { font-size: 16px; }
+    }
+
+    /* ── Medium phones (481px – 600px) ── */
+    @media (min-width: 481px) and (max-width: 600px) {
+      input, button.action, select { width: 90%; }
+      .card { max-width: 460px; }
+    }
+
+    /* ── Tablets (601px – 900px) ── */
+    @media (min-width: 601px) and (max-width: 900px) {
+      .navbar { padding: 12px 10px; gap: 8px; }
+      .navbar button { padding: 8px 14px; font-size: 13px; }
+      .section { padding: 20px 18px; }
+      input, button.action, select { width: 88%; }
+      .card { max-width: 520px; }
+      .history-table { width: 95%; }
+      .logo-container { max-width: 340px; }
+      .logo-container img { width: 220px; }
+      .modal-content { width: 88%; max-width: 460px; }
+    }
+
+    /* ── Large tablets / small laptops (901px – 1200px) ── */
+    @media (min-width: 901px) and (max-width: 1200px) {
+      input, button.action, select { width: 82%; }
+      .card { max-width: 500px; }
+      .history-table { width: 88%; }
+    }
+
+    /* ── Wide desktops (≥ 1440px) ── */
+    @media (min-width: 1440px) {
+      .card { max-width: 560px; }
+      .history-table { width: 80%; }
+      input, button.action, select { width: 75%; }
+    }
+
+    /* ── Landscape phones ── */
+    @media (max-height: 500px) and (orientation: landscape) {
+      .navbar { padding: 6px 8px; gap: 5px; }
+      .navbar button { padding: 6px 10px; font-size: 11px; }
+      .section { padding: 10px 12px; }
+      .logo-container { padding: 10px; max-width: 280px; }
+      .logo-container img { width: 150px; }
+    }
+
+    /* ── Touch devices: remove hover transforms ── */
+    @media (hover: none) {
+      .navbar button:hover { transform: none; box-shadow: none; }
+      button.action:hover { transform: none; box-shadow: none; }
+      .card:hover { transform: none; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
     }
   </style>
 </head>
